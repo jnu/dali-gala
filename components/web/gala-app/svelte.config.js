@@ -19,7 +19,7 @@ const config = {
 		}),
 		output: {
 			bundleStrategy: 'inline'
-		}
+		},
 	}
 };
 
