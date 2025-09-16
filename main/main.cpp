@@ -83,25 +83,8 @@ extern "C" void app_main()
     printf("Device is ready to use!\r\n");
     set_led_ready();
 
-    uint32_t Time_count=0;
-    uint32_t Time=0;
-
     while (1) {
-        WIFI_Loop();
-
-        if(DALI_Loop && DALI_NUM){
-            Time_count++;
-            if(Time_count == 1)
-            {
-              Time_count = 0;
-              Time ++;
-              if(Time > 300){
-                Time = 0;
-              }
-              setBrightness(Time%4 +1,Time/4);
-            }
-          }
-        
+        // not needed
         vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
     }
 }

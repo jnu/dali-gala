@@ -22,6 +22,7 @@ void Scan_DALI_addr_ALL();                                                // Sca
 void Scan_DALI_addr_ALL_DT6();
 void Delete_DALI_addr_ALL();                                              // Delete the addresses of all devices on the bus   
 void Assign_new_address_ALL();                                            // Reassign addresses to all devices on the bus
+int16_t DALICheckStatus(uint8_t addr);
 
 #ifdef __cplusplus
 }

@@ -16,8 +16,8 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
 
     # Then, generate the header file from the built HTML
     add_custom_command(
-        OUTPUT ${COMPONENT_DIR}/webapp.h
-        COMMAND ${CMAKE_COMMAND} -P ${COMPONENT_DIR}/build_app.cmake
+        OUTPUT ${COMPONENT_DIR}/flash_data/app.html
+        COMMAND cp ${COMPONENT_DIR}/gala-app/build/index.html ${COMPONENT_DIR}/flash_data/app.html
         DEPENDS ${COMPONENT_DIR}/gala-app/build/index.html
         COMMENT "Generating webapp.h from built HTML"
         VERBATIM
@@ -25,7 +25,7 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
 
     # Create a target that depends on the header file
     add_custom_target(webapp_build
-        DEPENDS ${COMPONENT_DIR}/webapp.h
+        DEPENDS ${COMPONENT_DIR}/flash_data/app.html
     )
 
     # Make sure the component library depends on the webapp build
@@ -34,5 +34,7 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     # Add the generated header to clean files
     set_property(DIRECTORY "${COMPONENT_DIR}" APPEND PROPERTY
         ADDITIONAL_CLEAN_FILES webapp.h)
+
+    littlefs_create_partition_image(storage ./flash_data FLASH_IN_PROJECT)
 endif()
 

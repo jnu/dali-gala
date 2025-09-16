@@ -35,7 +35,7 @@ void Assign_new_address_ALL_CPP();
 
 // C++ wrapper functions
 void DALI_Init_CPP() {
-  printf("This is Wavshare's DALI board \r\n");
+  printf("Initializing DALI bus \r\n");
   //setup RX/TX pin
   pinMode(RX_PIN, INPUT);
   pinMode(TX_PIN, OUTPUT);
@@ -71,6 +71,11 @@ void Lighten_ALL_CPP() {
 void Extinguish_ALL_CPP() {                                                       
   printf("Running: Extinguish all lamps\r\n");
   dali.set_level(0);
+}
+
+int16_t DALICheckStatus(uint8_t addr)
+{
+  return dali.cmd(0x11, addr);
 }
 
 void Scan_DALI_addr_ALL_CPP() {                                                   

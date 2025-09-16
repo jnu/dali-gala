@@ -1,27 +1,28 @@
 #pragma once
 #include <WiFi.h>
-#include <WebServer.h>
 #include "WS_DALI.h"
+#include <ESPAsyncWebServer.h>
+#include <AsyncTCP.h>
+#include <ArduinoJson.h>
+#include <AsyncJson.h>
+#include <AsyncMessagePack.h>
 
 // The name and password of the WiFi access point
-#define APSSID       "pp"
-#define APPSK        "GoodPlaceGoodDog"
-extern bool DALI_Loop;
+#define APSSID "Gala"
+#define APPSK  "GalaDali2025"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void setBrightness(int sliderId, int value);
-void handleSwitch(uint8_t ledNumber);
+void handleRoot(AsyncWebServerRequest *request);
+void handleLights(AsyncWebServerRequest *request, JsonVariant &json);
+void handleAddressesQuery(AsyncWebServerRequest *request);
+void handleAddressQuery(AsyncWebServerRequest *request);
 
-void handleRoot();
-void handleSetSlider();
-void handleRGBOn();
-void handleRGBOff();
+void sendError(AsyncWebServerRequest *request, int code, String message);
 
 void WIFI_Init();
-void WIFI_Loop();
 
 #ifdef __cplusplus
 }

@@ -6,66 +6,79 @@
 #include <stdarg.h>
 
 
-// The name and password of the WiFi access point
+// Configuration for the Wifi Access Point.
+// Users can connect using this SSID, password, on this IP.
 const char *ssid = APSSID;                
 const char *password = APPSK;               
-IPAddress apIP(10, 10, 0, 1);    // Set the IP address of the AP
+IPAddress apIP(10, 10, 0, 1);
 
 char ipStr[16];
-WebServer server(80);                               
-
-uint8_t sliderValues[64] = {0};
-bool DALI_Loop = 1;
+static AsyncWebServer server(80);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-void handleRoot() {
-  String myhtmlPage = APP_HTML_CONTENT;
-
-  server.send(200, "text/html", myhtmlPage); 
-  printf("The user visited the home page\r\n");
+void handleRoot(AsyncWebServerRequest *request)
+{
+  printf("Home page\n");
+  request->send(200, "text/html", APP_HTML_CONTENT);
 }
 
 
-void handleSetSlider() {
-  if (server.hasArg("sliderId") && server.hasArg("value")) {
-    int sliderId = server.arg("sliderId").toInt();
-    int value = server.arg("value").toInt();
-    
-    // 确保 sliderId 在合法范围内
-    if (sliderId >= 1 && sliderId <= DALI_NUM) {
-      setBrightness(sliderId, value);
+void sendError(AsyncWebServerRequest *request,int code, String message)
+{
+  // TODO: better serialization. Can't handle quotes right now.
+  String body = "{\"error\": \"" + message + "\", \"code\": " + code + "}";
+  request->send(code, "application/json", body);
+}
+
+void handleAddressesQuery(AsyncWebServerRequest *request)
+{
+  // Return a list of addresses
+  String body = "{\"addresses\": [";
+  for (int i = 0; i < DALI_NUM; i++) {
+    if (i > 0) {
+      body += ",";
     }
+    body += String(DALI_Addr[i]);
   }
-  server.send(200, "text/plain", "OK");
+  body += "]}";
+  request->send(200, "application/json", body);
 }
 
-// 设置亮度的函数（需要实现具体逻辑）
-void setBrightness(int sliderId, int value) {
-    // 这里根据 sliderId 设置亮度
-    Luminaire_Brightness(value, DALI_Addr[sliderId-1]);
-    printf("Slider %d value: %d\n", sliderId, value);
+void handleAddressQuery(AsyncWebServerRequest *request)
+{
+  String address = request->pathArg(0);
+  uint addr = address.toInt();
+  
+  int16_t state = DALICheckStatus(addr);
+  String body = "{\"status\":" + String(state) + "}";
+  request->send(200, "application/json", body);
 }
 
-void handleSwitch(uint8_t ledNumber) {
-  switch(ledNumber){
-    case 1:
-      printf("RGB On.\r\n");
-      Lighten_ALL();                                                       
-      break;
-    case 2:
-      printf("RGB Off.\r\n");
-      Extinguish_ALL();                                                    
-      break;
+/**
+ * Handle lights request.
+ */
+void handleLights(AsyncWebServerRequest *request, JsonVariant &json)
+{
+  AsyncResponseStream *response = request->beginResponseStream("application/json");
+  bool state = json.as<JsonObject>()["state"];
+
+  printf("Lights request: %d\n", state);
+  // TODO - check if state is valid
+
+  // Set lights state
+  if(state) {
+    Lighten_ALL();
+  } else {
+    Extinguish_ALL();
   }
-  server.send(200, "text/plain", "OK");
+
+  response->print("{\"success\": true}");
+  request->send(response);
 }
-void handleALLOn()     { handleSwitch(1); }
-void handleALLOff()    { handleSwitch(2); }
-void handleLoop()      { DALI_Loop = ! DALI_Loop;}
 
 
 void WIFI_Init()
@@ -89,25 +102,35 @@ void WIFI_Init()
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0)); // Set the IP address and gateway of the AP
   
   IPAddress myIP = WiFi.softAPIP();
-  uint32_t ipAddress = WiFi.softAPIP();
   printf("AP IP address: ");
   sprintf(ipStr, "%d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);
   printf("%s\r\n", ipStr);
 
   printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:%d\r\n", DALI_NUM);
-  server.on("/", handleRoot);
-  server.on("/SetSlider", handleSetSlider);
-  server.on("/ALLOn"       , handleALLOn);
-  server.on("/ALLOff"      , handleALLOff);
-  server.on("/Loop"        , handleLoop);
+  
+  server.on(
+    "^\\/$",
+    HTTP_GET,
+    handleRoot
+  );
+  server.on(
+    "^\\/api\\/v1\\/addresses$",
+    HTTP_GET,
+    handleAddressesQuery
+  );
+  server.on(
+    "^\\/api\\/v1\\/addresses\\/([0-9]+)$",
+    HTTP_GET,
+    handleAddressQuery
+  );
 
-  server.begin(); 
-  printf("Web server started\r\n");
-}
+  AsyncCallbackJsonWebHandler* apiV1LightsHandler = new AsyncCallbackJsonWebHandler("^\\/api\\/v1\\/addresses$", handleLights);
+  apiV1LightsHandler->setMethod(HTTP_POST);
+  server.addHandler(apiV1LightsHandler);
 
-void WIFI_Loop()
-{
-  server.handleClient(); // Processing requests from clients
+  server.begin();
+
+  printf("Web server started\n");
 }
 
 #ifdef __cplusplus
