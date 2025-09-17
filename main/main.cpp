@@ -16,7 +16,7 @@
 #include "DALICtl.h"
 #include "WiFiAccessPoint.h"
 
-static const char *TAG = "example";
+static const char *TAG = "gala:main";
 
 /* Use project configuration menu (idf.py menuconfig) to choose the GPIO to blink,
    or you can edit the following line and set a number here.
