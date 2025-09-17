@@ -1,10 +1,10 @@
-#include "WS_WIFI.h"
+#include "WiFiAccessPoint.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "nvs_flash.h"
 #include <stdarg.h>
 
-static const char *TAG = "WS_WIFI";
+static const char *TAG = "WiFiAccessPoint";
 
 // Configuration for the Wifi Access Point.
 // Users can connect using this SSID, password, on this IP.

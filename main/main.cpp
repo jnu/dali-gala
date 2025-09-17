@@ -14,7 +14,7 @@
 #include "led_strip.h"
 #include "sdkconfig.h"
 #include "DALICtl.h"
-#include "WS_WIFI.h"
+#include "WiFiAccessPoint.h"
 
 static const char *TAG = "example";
 
