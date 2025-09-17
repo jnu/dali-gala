@@ -1,0 +1,15 @@
+menu "Dali WiFi Gala Configuration"
+
+    config WIFI_SSID
+        string "WiFi SSID"
+        default "Gala"
+        help
+            The SSID of the WiFi network to connect to.
+    
+    config WIFI_PASSWORD
+        string "WiFi Password"
+        default "GalaDali2025"
+        help
+            The password of the WiFi network to connect to.
+
+endmenu
