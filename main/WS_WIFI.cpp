@@ -4,6 +4,7 @@
 #include "nvs_flash.h"
 #include <stdarg.h>
 
+static const char *TAG = "WS_WIFI";
 
 // Configuration for the Wifi Access Point.
 // Users can connect using this SSID, password, on this IP.
@@ -77,7 +78,7 @@ void handleLights(AsyncWebServerRequest *request, JsonVariant &json)
 
 void WIFI_Init()
 {
-  Serial.begin(115200);
+  ESP_LOGI(TAG, "Initializing the WIFI ...");
 
   // Initialize NVS first (required for WiFi)
   esp_err_t ret = nvs_flash_init();
@@ -88,14 +89,9 @@ void WIFI_Init()
   ESP_ERROR_CHECK(ret);
 
   // Initialize the webapp
-  webapp_init();
-  bool lfs = false;
-  
-  Serial.println("Attempting to initialize LittleFS...");
-  lfs = LittleFS.begin(false, "/littlefs", 5, "storage");
-
-  if (!lfs) {
-    Serial.println("Failed to open LittleFS root directory");
+  if (!webapp_init()) {
+    ESP_LOGI(TAG, "Failed to initialize the webapp");
+    return;
   }
   
   WiFi.mode(WIFI_AP); 
