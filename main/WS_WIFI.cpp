@@ -2,7 +2,6 @@
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "nvs_flash.h"
-#include "webapp.h"
 #include <stdarg.h>
 
 
@@ -19,12 +18,6 @@ static AsyncWebServer server(80);
 extern "C" {
 #endif
 
-
-void handleRoot(AsyncWebServerRequest *request)
-{
-  printf("Home page\n");
-  request->send(200, "text/html", APP_HTML_CONTENT);
-}
 
 
 void sendError(AsyncWebServerRequest *request,int code, String message)
@@ -63,6 +56,7 @@ void handleAddressQuery(AsyncWebServerRequest *request)
  */
 void handleLights(AsyncWebServerRequest *request, JsonVariant &json)
 {
+  printf("Lights request: %s\n", json.as<String>().c_str());
   AsyncResponseStream *response = request->beginResponseStream("application/json");
   bool state = json.as<JsonObject>()["state"];
 
@@ -83,6 +77,8 @@ void handleLights(AsyncWebServerRequest *request, JsonVariant &json)
 
 void WIFI_Init()
 {
+  Serial.begin(115200);
+
   // Initialize NVS first (required for WiFi)
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -90,6 +86,17 @@ void WIFI_Init()
     ret = nvs_flash_init();
   }
   ESP_ERROR_CHECK(ret);
+
+  // Initialize the webapp
+  webapp_init();
+  bool lfs = false;
+  
+  Serial.println("Attempting to initialize LittleFS...");
+  lfs = LittleFS.begin(false, "/littlefs", 5, "storage");
+
+  if (!lfs) {
+    Serial.println("Failed to open LittleFS root directory");
+  }
   
   WiFi.mode(WIFI_AP); 
   esp_wifi_set_ps(WIFI_PS_NONE);
@@ -108,25 +115,27 @@ void WIFI_Init()
 
   printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:%d\r\n", DALI_NUM);
   
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->redirect("/index.html");
+  });
+  server.serveStatic("/index.html", LittleFS, "/app.html");
+
+  AsyncCallbackJsonWebHandler* lightsHandler = new AsyncCallbackJsonWebHandler("/api/v1/devices", handleLights);
+  lightsHandler->setMethod(HTTP_POST);
+  lightsHandler->setMaxContentLength(1024);
+  server.addHandler(lightsHandler);
+
+
   server.on(
-    "^\\/$",
-    HTTP_GET,
-    handleRoot
-  );
-  server.on(
-    "^\\/api\\/v1\\/addresses$",
+    "^\\/api\\/v1\\/devices$",
     HTTP_GET,
     handleAddressesQuery
   );
   server.on(
-    "^\\/api\\/v1\\/addresses\\/([0-9]+)$",
+    "^\\/api\\/v1\\/devices\\/([0-9]+)$",
     HTTP_GET,
     handleAddressQuery
   );
-
-  AsyncCallbackJsonWebHandler* apiV1LightsHandler = new AsyncCallbackJsonWebHandler("^\\/api\\/v1\\/addresses$", handleLights);
-  apiV1LightsHandler->setMethod(HTTP_POST);
-  server.addHandler(apiV1LightsHandler);
 
   server.begin();
 
@@ -136,17 +145,3 @@ void WIFI_Init()
 #ifdef __cplusplus
 }
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,7 +1,7 @@
 # Build the website into a single file and inline everything.
 
 # Register the component with the generated header file
-idf_component_register(INCLUDE_DIRS ".")
+idf_component_register(SRCS "webapp.c" INCLUDE_DIRS "." REQUIRES littlefs esp_system)
 
 # Only run this during the build phase, not during early expansion
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)

@@ -1,4 +1,13 @@
 dependencies:
-  espressif/led_strip: ^3.0.0
-  espressif/arduino-esp32: ^3.3.0~1
-  esp32async/espasyncwebserver: ^3.8.0
+  espressif/led_strip:
+    version: "^3.0.0"
+    require: public
+  esp32async/espasyncwebserver:
+    version: "^3.8.0"
+    require: public
+  espressif/arduino-esp32:
+    version: "^3.3.0~1"
+    require: public
+  joltwallet/littlefs:
+    version: "~=1.20.0"
+    require: public
