@@ -1,7 +1,7 @@
-#include "WebServer.h"
+#include "GalaWebServer.h"
 #include "esp_log.h"
 
-static const char *TAG = "WebServer";
+static const char *TAG = "GalaWebServer";
 
 static AsyncWebServer server(WEB_SERVER_PORT);
 
@@ -66,10 +66,10 @@ void handleLights(AsyncWebServerRequest *request, JsonVariant &json)
  *
  * @return true if successful, false otherwise
  */
-bool WebServerInit(void)
+bool GalaWebServerInit(void)
 {
     // Initialize the webapp
-    if (!WebAppInit()) {
+    if (!GalaWebAppInit()) {
         ESP_LOGI(TAG, "Failed to initialize the webapp");
         return false;
     }

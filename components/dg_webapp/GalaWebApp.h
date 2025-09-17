@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-bool WebAppInit(void);
+bool GalaWebAppInit(void);
 
 #ifdef __cplusplus
 }

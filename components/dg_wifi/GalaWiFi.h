@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-bool WiFiInit();
+bool GalaWiFiInit();
 
 #ifdef __cplusplus
 }

@@ -13,11 +13,11 @@
 #include "esp_log.h"
 #include "led_strip.h"
 #include "sdkconfig.h"
-#include "DALICtl.h"
-#include "WebServer.h"
-#include "WiFiAccessPoint.h"
+#include "GalaDALICtl.h"
+#include "GalaWebServer.h"
+#include "GalaWiFi.h"
 
-static const char *TAG = "gala:main";
+static const char *TAG = "GalaMain";
 
 /* Use project configuration menu (idf.py menuconfig) to choose the GPIO to blink,
    or you can edit the following line and set a number here.
@@ -75,19 +75,19 @@ extern "C" void app_main()
     configure_led();
     set_led_waiting();
 
-    if (!WiFiInit()) {
+    if (!GalaWiFiInit()) {
         ESP_LOGE(TAG, "The WIFI initialization failed!\r\n");
         return;
     }
     ESP_LOGI(TAG, "The WIFI initialization is complete!\r\n");
 
-    if (!WebServerInit()) {
+    if (!GalaWebServerInit()) {
         ESP_LOGE(TAG, "The Web Server initialization failed!\r\n");
         return;
     }
     ESP_LOGI(TAG, "The Web Server initialization is complete!\r\n");
     
-    if (!DALIInit()) {
+    if (!GalaDALIInit()) {
         ESP_LOGE(TAG, "The DALI initialization failed!\r\n");
         return;
     }

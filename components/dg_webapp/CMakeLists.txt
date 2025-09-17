@@ -2,15 +2,24 @@
 # That will be flashed to the device and mounted by the application.
 
 # Register the component with the generated header file
-idf_component_register(SRCS "WebApp.cpp" INCLUDE_DIRS "." REQUIRES esp_system arduino-esp32)
+idf_component_register(SRCS "GalaWebApp.cpp" INCLUDE_DIRS "." REQUIRES esp_system arduino-esp32)
 
 # Only run this during the build phase, not during early expansion
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     # First, build the Svelte app
     add_custom_command(
+        OUTPUT ${COMPONENT_DIR}/gala-app/node_modules
+        COMMAND ${CMAKE_COMMAND} -E chdir ${COMPONENT_DIR}/gala-app pnpm install
+        WORKING_DIRECTORY ${COMPONENT_DIR}/gala-app
+        COMMENT "Installing web dependencies"
+        VERBATIM
+    )
+
+    add_custom_command(
         OUTPUT ${COMPONENT_DIR}/gala-app/build/index.html
         COMMAND ${CMAKE_COMMAND} -E chdir ${COMPONENT_DIR}/gala-app pnpm build
         WORKING_DIRECTORY ${COMPONENT_DIR}/gala-app
+        DEPENDS ${COMPONENT_DIR}/gala-app/node_modules
         COMMENT "Building Svelte web app"
         VERBATIM
     )
@@ -20,7 +29,7 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
         OUTPUT ${COMPONENT_DIR}/flash_data/app.html
         COMMAND cp ${COMPONENT_DIR}/gala-app/build/index.html ${COMPONENT_DIR}/flash_data/app.html
         DEPENDS ${COMPONENT_DIR}/gala-app/build/index.html
-        COMMENT "Generating webapp.h from built HTML"
+        COMMENT "Generating compiled web app file"
         VERBATIM
     )
 

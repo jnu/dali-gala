@@ -1,2 +1,2 @@
-flash_data/
-!flash_data/.gitkeep
+!./flash_data/.gitkeep
+./flash_data/

@@ -1,4 +1,4 @@
-#include "DALICtl.h"
+#include "GalaDALICtl.h"
 
 Dali dali;
 uint8_t DALI_Addr[64] = {0};
@@ -109,7 +109,7 @@ void Assign_new_address_ALL_CPP(){
 extern "C" {
 #endif
 
-bool DALIInit() {
+bool GalaDALIInit() {
   DALI_Init_CPP();
   return true;
 }

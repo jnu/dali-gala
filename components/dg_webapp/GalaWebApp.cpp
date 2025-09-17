@@ -1,8 +1,8 @@
 #include "esp_system.h"
 #include "esp_log.h"
-#include "WebApp.h"
+#include "GalaWebApp.h"
 
-static const char *TAG = "WebApp";
+static const char *TAG = "GalaWebApp";
 
 /**
  * Initialize the static assets used in the web application.
@@ -11,7 +11,7 @@ static const char *TAG = "WebApp";
  *
  * @return true if successful, false otherwise
  */
-bool WebAppInit(void)
+bool GalaWebAppInit(void)
 {
     ESP_LOGI(TAG, "Mounting the web app image ...");
     bool lfs = LittleFS.begin(false, "/littlefs", 5, "storage");

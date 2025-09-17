@@ -12,7 +12,7 @@ extern uint8_t DALI_NUM;
 extern "C" {
 #endif
 
-bool DALIInit();                                                         // Example Initialize the DALI bus
+bool GalaDALIInit();                                                         // Example Initialize the DALI bus
 
 void Blinking_ALL();                                                      // All lights on the bus flash
 void Lighten_ALL();                                                       // Light all lamps on the bus

@@ -1,10 +1,10 @@
-#include "WiFiAccessPoint.h"
+#include "GalaWiFi.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "nvs_flash.h"
 #include <stdarg.h>
 
-static const char *TAG = "WiFiAccessPoint";
+static const char *TAG = "GalaWiFi";
 
 // Configuration for the Wifi Access Point.
 // Users can connect using this SSID, password, on this IP.
@@ -21,7 +21,7 @@ char ipStr[16];
  *
  * @return true if successful, false otherwise
  */
-bool WiFiInit()
+bool GalaWiFiInit()
 {
   ESP_LOGI(TAG, "Initializing the WIFI ...");
 
