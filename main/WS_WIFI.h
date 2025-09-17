@@ -1,6 +1,6 @@
 #pragma once
 #include <WiFi.h>
-#include "WS_DALI.h"
+#include "DALICtl.h"
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
 #include <ArduinoJson.h>

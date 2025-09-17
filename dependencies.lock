@@ -507,6 +507,6 @@ direct_dependencies:
 - esp32async/espasyncwebserver
 - espressif/arduino-esp32
 - espressif/led_strip
-manifest_hash: 807b208053cda42514d814ff1922b661a3650d34a90eecafaa2e1e8c56f10d3a
+manifest_hash: 8ca12c4386accfc5e6de08614e20189f5d7eeb61e0807a7175208a313a444f9d
 target: esp32s3
 version: 2.0.0

@@ -1,4 +1,4 @@
-idf_component_register(SRCS "main.cpp" "WS_WIFI.cpp" "WS_DALI.cpp" "DALI_Lib.cpp"
+idf_component_register(SRCS "main.cpp" "WS_WIFI.cpp"
                        INCLUDE_DIRS "." 
-                       REQUIRES web nvs_flash esp_wifi esp_http_server freertos driver led_strip esp_system esp_timer)
+                       REQUIRES web dali nvs_flash esp_wifi esp_http_server freertos driver led_strip esp_system)
 target_compile_options(${COMPONENT_LIB} PRIVATE -std=gnu++23)

@@ -1,6 +1,6 @@
 #pragma once
 #include <Arduino.h>
-#include "DALI_Lib.h"
+#include "DALILib.h"
 
 #define TX_PIN 17
 #define RX_PIN 14

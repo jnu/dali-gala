@@ -13,7 +13,7 @@
 #include "esp_log.h"
 #include "led_strip.h"
 #include "sdkconfig.h"
-#include "WS_DALI.h"
+#include "DALICtl.h"
 #include "WS_WIFI.h"
 
 static const char *TAG = "example";

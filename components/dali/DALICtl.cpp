@@ -1,4 +1,4 @@
-#include "WS_DALI.h"
+#include "DALICtl.h"
 
 Dali dali;
 uint8_t DALI_Addr[64] = {0};
