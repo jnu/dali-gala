@@ -15,13 +15,14 @@ void sendError(AsyncWebServerRequest *request,int code, String message)
 
 void handleAddressesQuery(AsyncWebServerRequest *request)
 {
-  // Return a list of addresses
-  String body = "{\"addresses\": [";
-  for (int i = 0; i < DALI_NUM; i++) {
+  int16_t* devices = GalaDALIScanAllAddresses();
+  // Return a list of all device statuses
+  String body = "{\"statuses\": [";
+  for (uint8_t i = 0; i < 64; i++) {
     if (i > 0) {
       body += ",";
     }
-    body += String(DALI_Addr[i]);
+    body += String(devices[i]);
   }
   body += "]}";
   request->send(200, "application/json", body);
@@ -32,7 +33,7 @@ void handleAddressQuery(AsyncWebServerRequest *request)
   String address = request->pathArg(0);
   uint addr = address.toInt();
   
-  int16_t state = DALICheckStatus(addr);
+  int16_t state = GalaDALICheckStatus(addr);
   String body = "{\"status\":" + String(state) + "}";
   request->send(200, "application/json", body);
 }
@@ -50,9 +51,9 @@ void handleLights(AsyncWebServerRequest *request, JsonVariant &json)
 
   // Set lights state
   if(state) {
-    Lighten_ALL();
+    GalaDALIAllOn();
   } else {
-    Extinguish_ALL();
+    GalaDALIAllOff();
   }
 
   response->print("{\"success\": true}");
