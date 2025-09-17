@@ -109,8 +109,9 @@ void Assign_new_address_ALL_CPP(){
 extern "C" {
 #endif
 
-void DALI_Init() {
+bool DALIInit() {
   DALI_Init_CPP();
+  return true;
 }
 
 void Blinking_ALL() {

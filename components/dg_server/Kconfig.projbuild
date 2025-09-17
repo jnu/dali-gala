@@ -1,0 +1,9 @@
+menu "Dali Gala Server Configuration"
+
+    config WEB_SERVER_PORT
+        int "Web Server Port"
+        default 80
+        help
+            The port on which the web server will listen for incoming requests.
+
+endmenu

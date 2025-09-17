@@ -1,6 +1,6 @@
 dependencies:
-  espressif/led_strip:
-    version: "^3.0.0"
+  esp32async/espasyncwebserver:
+    version: "^3.8.0"
     require: public
   espressif/arduino-esp32:
     version: "^3.3.0~1"

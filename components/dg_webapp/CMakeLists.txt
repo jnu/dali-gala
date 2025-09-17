@@ -2,7 +2,7 @@
 # That will be flashed to the device and mounted by the application.
 
 # Register the component with the generated header file
-idf_component_register(SRCS "webapp.cpp" INCLUDE_DIRS "." REQUIRES esp_system arduino-esp32)
+idf_component_register(SRCS "WebApp.cpp" INCLUDE_DIRS "." REQUIRES esp_system arduino-esp32)
 
 # Only run this during the build phase, not during early expansion
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)

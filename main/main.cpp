@@ -14,6 +14,7 @@
 #include "led_strip.h"
 #include "sdkconfig.h"
 #include "DALICtl.h"
+#include "WebServer.h"
 #include "WiFiAccessPoint.h"
 
 static const char *TAG = "gala:main";
@@ -74,17 +75,30 @@ extern "C" void app_main()
     configure_led();
     set_led_waiting();
 
-    WIFI_Init();
-    printf("The WIFI initialization is complete!\r\n");
-  
-    DALI_Init();
-    printf("DALI device scan is complete.\r\n");
+    if (!WiFiInit()) {
+        ESP_LOGE(TAG, "The WIFI initialization failed!\r\n");
+        return;
+    }
+    ESP_LOGI(TAG, "The WIFI initialization is complete!\r\n");
 
-    printf("Device is ready to use!\r\n");
+    if (!WebServerInit()) {
+        ESP_LOGE(TAG, "The Web Server initialization failed!\r\n");
+        return;
+    }
+    ESP_LOGI(TAG, "The Web Server initialization is complete!\r\n");
+    
+    if (!DALIInit()) {
+        ESP_LOGE(TAG, "The DALI initialization failed!\r\n");
+        return;
+    }
+    ESP_LOGI(TAG, "DALI device scan is complete.\r\n");
+
+    // Everything started up successfully!! woohoo!
+    ESP_LOGI(TAG, "Device is ready to use!\r\n");
     set_led_ready();
 
     while (1) {
         // not needed
-        vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
+        delay(1000);
     }
 }
