@@ -1,4 +1,5 @@
-# Build the website into a single file and inline everything.
+# This component builds the web app static assets into a LittleFS image
+# That will be flashed to the device and mounted by the application.
 
 # Register the component with the generated header file
 idf_component_register(SRCS "webapp.c" INCLUDE_DIRS "." REQUIRES littlefs esp_system)
