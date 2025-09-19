@@ -19,66 +19,100 @@
     </div>
 {:else}
     <div class="space-y-4">
-        <h2 class="text-xl font-semibold">Device Statuses</h2>
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold">Device Statuses</h2>
+            <div class="text-sm text-gray-500">
+                {data.deviceStatuses.length} devices
+            </div>
+        </div>
         {#if data.deviceStatuses.length === 0}
             <p class="text-gray-500">No devices found</p>
         {:else}
-            <div class="grid gap-4">
+            <!-- Compact grid layout -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
                 {#each data.deviceStatuses as device}
-                    <div class="border rounded-lg p-4 bg-gray-50">
-                        <h3 class="font-medium">Device {device.shortAddress}</h3>
-                        <div class="mt-2 space-y-1 text-sm">
-                            <div class="flex justify-between">
-                                <span>Port 1 Connected:</span>
-                                <span class={device.status.port1Connected ? 'text-green-600' : 'text-red-600'}>
-                                    {device.status.port1Connected ? 'Yes' : 'No'}
+                    <div class="border rounded-lg p-2 bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div class="text-center">
+                            <div class="text-sm font-medium text-gray-700">#{device.shortAddress}</div>
+                            <div class="mt-1 flex flex-wrap justify-center gap-1">
+                                <!-- Status indicators as small badges -->
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.port1Connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                    P1
                                 </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Port 2 Connected:</span>
-                                <span class={device.status.port2Connected ? 'text-green-600' : 'text-red-600'}>
-                                    {device.status.port2Connected ? 'Yes' : 'No'}
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.port2Connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                    P2
                                 </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Any Port On:</span>
-                                <span class={device.status.anyPortOn ? 'text-green-600' : 'text-red-600'}>
-                                    {device.status.anyPortOn ? 'Yes' : 'No'}
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.anyPortOn ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                    ON
                                 </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Arc Out of Range:</span>
-                                <span class={device.status.arcOutOfRange ? 'text-red-600' : 'text-green-600'}>
-                                    {device.status.arcOutOfRange ? 'Yes' : 'No'}
-                                </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Action in Progress:</span>
-                                <span class={device.status.actionInProgress ? 'text-yellow-600' : 'text-green-600'}>
-                                    {device.status.actionInProgress ? 'Yes' : 'No'}
-                                </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Device Not Configured:</span>
-                                <span class={device.status.deviceNotConfigured ? 'text-red-600' : 'text-green-600'}>
-                                    {device.status.deviceNotConfigured ? 'Yes' : 'No'}
-                                </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Missing Short Address:</span>
-                                <span class={device.status.missingShortAddress ? 'text-red-600' : 'text-green-600'}>
-                                    {device.status.missingShortAddress ? 'Yes' : 'No'}
-                                </span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Missing Arc Level:</span>
-                                <span class={device.status.missingArcLevel ? 'text-red-600' : 'text-green-600'}>
-                                    {device.status.missingArcLevel ? 'Yes' : 'No'}
-                                </span>
+                                {#if device.status.arcOutOfRange}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        ARC
+                                    </span>
+                                {/if}
+                                {#if device.status.actionInProgress}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        ACT
+                                    </span>
+                                {/if}
+                                {#if device.status.deviceNotConfigured}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        CFG
+                                    </span>
+                                {/if}
+                                {#if device.status.missingShortAddress}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        ADDR
+                                    </span>
+                                {/if}
+                                {#if device.status.missingArcLevel}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        LEVEL
+                                    </span>
+                                {/if}
                             </div>
                         </div>
                     </div>
                 {/each}
+            </div>
+            
+            <!-- Legend -->
+            <div class="mt-4 p-3 bg-gray-100 rounded-lg">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Status Legend:</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div class="flex items-center gap-1">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">P1</span>
+                        <span>Port 1 Connected</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">P2</span>
+                        <span>Port 2 Connected</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">ON</span>
+                        <span>Any Port On</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">ARC</span>
+                        <span>Arc Out of Range</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">ACT</span>
+                        <span>Action in Progress</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">CFG</span>
+                        <span>Not Configured</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">ADDR</span>
+                        <span>Missing Address</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">LEVEL</span>
+                        <span>Missing Arc Level</span>
+                    </div>
+                </div>
             </div>
         {/if}
     </div>
