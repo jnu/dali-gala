@@ -128,7 +128,7 @@ const expandStatus = (status: number) => {
         'missingArcLevel',
     ] as const;
 
-    return keys.reduce((acc, key) => {
+    return keys.toReversed().reduce((acc, key) => {
         const bit = status & 0x01;
         acc[key] = !!bit;
         status >>= 1;
