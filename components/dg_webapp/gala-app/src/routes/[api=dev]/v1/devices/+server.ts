@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 // Mock data: first number is 135, rest are -101
-const mockStatuses = [-96, ...Array(63).fill(6)];
+const mockStatuses = [7, 131, ...Array(62).fill(-101)];
 
 export const GET: RequestHandler = async () => {
 	// Only return mock data in development

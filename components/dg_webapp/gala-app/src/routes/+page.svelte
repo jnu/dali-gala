@@ -32,27 +32,35 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 m-4">
                 {#each data.deviceStatuses as device}
                     <div class="border bg-gray-50 hover:bg-gray-100 transition-colors">
-                        <div class="text-xs font-medium text-gray-700 p-1">{device.shortAddress}</div>
+                        {#if device.error}
+                            <div class="text-xs font-medium text-gray-400 p-1">{device.shortAddress}</div>
+                        {:else}
+                            <div class="text-xs font-medium text-gray-700 p-1">{device.shortAddress}</div>
+                        {/if}
                         <div class="text-center px-2 pb-2">
-                            
-                            {#if device.status.port1Connected || device.status.port2Connected}
+                            {#if device.error}
+                                <div class="mt-1 text-xs text-gray-400">
+                                    {device.error.error}
+                                </div>
+                            {:else}
+                            {#if device.status.portOneConnected || device.status.portTwoConnected}
                                 <div class="mt-1 flex flex-wrap justify-center gap-1">
                                     <!-- Status indicators as small badges - only show when device is connected -->
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.port1Connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.portOneConnected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                                         P1
                                     </span>
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.port2Connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.portTwoConnected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                                         P2
                                     </span>
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.anyPortOn ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.arcPowerOn ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
                                         ON
                                     </span>
-                                    {#if device.status.arcOutOfRange}
+                                    {#if device.status.arcLevelOutOfRange}
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                                             ARC
                                         </span>
                                     {/if}
-                                    {#if device.status.actionInProgress}
+                                    {#if device.status.fadeInProgress}
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
                                             ACT
                                         </span>
@@ -62,12 +70,12 @@
                                             CFG
                                         </span>
                                     {/if}
-                                    {#if device.status.missingShortAddress}
+                                    {#if device.status.shortAddressMissing}
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                                             ADDR
                                         </span>
                                     {/if}
-                                    {#if device.status.missingArcLevel}
+                                    {#if device.status.arcLevelMissing}
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                                             LEVEL
                                         </span>
@@ -77,6 +85,7 @@
                                 <div class="mt-1 text-xs text-gray-400">
                                     Not Connected
                                 </div>
+                            {/if}
                             {/if}
                         </div>
                     </div>
@@ -103,7 +112,7 @@
                         <span>Any Port On</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">ARC</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">LVL</span>
                         <span>Arc Out of Range</span>
                     </div>
                     <div class="flex items-center gap-1">

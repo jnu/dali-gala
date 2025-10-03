@@ -12,4 +12,31 @@ menu "Dali WiFi Gala Configuration"
         help
             The password of the WiFi network to connect to.
 
+    choice WIFI_PS_LEVEL
+        bool "WiFi Power Save Level"
+        help
+            The power save level of the WiFi device.
+        config WIFI_PS_LEVEL_NONE
+            bool "None"
+            default true
+        config WIFI_PS_LEVEL_LOW
+            bool "Low"
+            default false
+        config WIFI_PS_LEVEL_HIGH
+            bool "High"
+            default false
+    endchoice
+
+    choice WIFI_MODE
+        bool "WiFi Mode"
+        help
+            The mode of the WiFi device.
+        config WIFI_MODE_AP
+            bool "AP"
+            default true
+        config WIFI_MODE_STA
+            bool "STA"
+            default false
+    endchoice
+
 endmenu

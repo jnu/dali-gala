@@ -3,7 +3,7 @@
 
 static const char *TAG = "GalaWebServer";
 
-static AsyncWebServer server(WEB_SERVER_PORT);
+static AsyncWebServer server(CONFIG_WEB_SERVER_PORT);
 
 
 void sendError(AsyncWebServerRequest *request,int code, String message)
@@ -60,6 +60,12 @@ void handleLights(AsyncWebServerRequest *request, JsonVariant &json)
   request->send(response);
 }
 
+void handleCommission(AsyncWebServerRequest *request)
+{
+  GalaDALICommission();
+  request->send(200, "application/json", "{\"success\": true}");
+}
+
 /**
  * Initialize the web server.
  *
@@ -85,6 +91,12 @@ bool GalaWebServerInit(void)
       lightsHandler->setMaxContentLength(1024);
       server.addHandler(lightsHandler);
     
+
+      server.on(
+        "^\\/api\\/v1\\/commission$",
+        HTTP_POST,
+        handleCommission
+      );
     
       server.on(
         "^\\/api\\/v1\\/devices$",

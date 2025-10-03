@@ -1,7 +1,15 @@
 import { getAllDeviceStatuses, type Device } from '$lib/gala';
 import type { PageLoad } from './$types';
+import { browser } from '$app/environment';
 
 export const load: PageLoad = async () => {
+    if (!browser) {
+        return {
+            deviceStatuses: [],
+            error: null
+        };
+    }
+    
     try {
         const deviceStatuses = await getAllDeviceStatuses();
         return {

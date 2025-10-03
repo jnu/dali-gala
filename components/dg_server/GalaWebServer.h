@@ -9,8 +9,6 @@
 #include "GalaWebApp.h"
 #include "GalaDALICtl.h"
 
-#define WEB_SERVER_PORT CONFIG_WEB_SERVER_PORT
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -24,14 +24,22 @@ export type GalaAPIResponseStatus = {
  * Device status information.
  */
 export type DALIStatus = {
-    port1Connected: boolean;
-    port2Connected: boolean;
-    anyPortOn: boolean;
-    arcOutOfRange: boolean;
-    actionInProgress: boolean;
+    portOneConnected: boolean;
+    portTwoConnected: boolean;
+    arcPowerOn: boolean;
+    arcLevelOutOfRange: boolean;
+    fadeInProgress: boolean;
     deviceNotConfigured: boolean;
-    missingShortAddress: boolean;
-    missingArcLevel: boolean;
+    shortAddressMissing: boolean;
+    arcLevelMissing: boolean;
+}
+
+/**
+ * Error status information.
+ */
+export type DALIErrorStatus = {
+    error: string;
+    errorCode: number;
 }
 
 /**
@@ -39,7 +47,8 @@ export type DALIStatus = {
  */
 export type Device = {
     shortAddress: number;
-    status: DALIStatus;
+    status: DALIStatus
+    error: DALIErrorStatus | null;
 };
 
 /**
@@ -106,9 +115,75 @@ export const getAllDeviceStatuses = async (): Promise<Device[]> => {
         return {
             shortAddress: i,
             status: expandStatus(status),
+            error: expandError(status),
         };
     });
 }
+
+/**
+ * Look up error codes and add a readable description.
+ * 
+ * @param status 
+ * @returns 
+ */
+const expandError = (status: number): DALIErrorStatus | null => {
+    switch (status) {
+        case -101:
+            return {
+                error: 'No reply from device',
+                errorCode: status,
+            };
+        default:
+            if (status < 0) {
+                return {
+                    error: 'Unknown error',
+                    errorCode: status,
+                };
+            }
+            return null;
+    }
+}
+
+/**
+ * Some examples of statuses:
+ * 
+ * ERRORS
+ * -------
+ * Response < 0 is an error code.
+ * 
+ *       Int: -101
+ *   Meaning: No reply from device: -101
+ * 
+ * STATUSES
+ * --------
+ * Responses >= 0 contain granular status information.
+ * 
+ * Scenario: Ballast is healthy and OFF
+ *      Int: 131
+ *   Binary: 10000011
+ * Expanded:
+ *    bit 0 / portOneConnected: true
+ *    bit 1 / portTwoConnected: true
+ *    bit 2 / arcPowerOn: false
+ *    bit 3 / arcLevelOutOfRange: false
+ *    bit 4 / fadeInProgress: false
+ *    bit 5 / deviceNotConfigured: false
+ *    bit 6 / shortAddressMissing: false
+ *    bit 7 / arcLevelMissing: true
+ * 
+ * Scenario: Ballast is healthy and ON
+ *      Int: 7
+ *   Binary: 00000111
+ * Expanded:
+ *    bit 0 / portOneConnected: true
+ *    bit 1 / portTwoConnected: true
+ *    bit 2 / arcPowerOn: true
+ *    bit 3 / arcLevelOutOfRange: false
+ *    bit 4 / fadeInProgress: false
+ *    bit 5 / deviceNotConfigured: false
+ *    bit 6 / shortAddressMissing: false
+ *    bit 7 / arcLevelMissing: false
+ */
 
 /**
  * Unpack the binary status data into a more interpretable object.
@@ -116,19 +191,27 @@ export const getAllDeviceStatuses = async (): Promise<Device[]> => {
  * @param status 
  * @returns 
  */
-const expandStatus = (status: number) => {
+const expandStatus = (status: number): DALIStatus => {
     const keys = [
-        'port1Connected',
-        'port2Connected',
-        'anyPortOn',
-        'arcOutOfRange',
-        'actionInProgress',
+        'portOneConnected',
+        'portTwoConnected',
+        'arcPowerOn',
+        'arcLevelOutOfRange',
+        'fadeInProgress',
         'deviceNotConfigured',
-        'missingShortAddress',
-        'missingArcLevel',
+        'shortAddressMissing',
+        'arcLevelMissing',
     ] as const;
 
-    return keys.toReversed().reduce((acc, key) => {
+    // Status codes <0 are errors, so don't bother trying to interpret them.
+    if (status < 0) {
+        return keys.reduce((acc, key) => {
+            acc[key] = false;
+            return acc;
+        }, {} as DALIStatus);
+    }
+
+    return keys.reduce((acc, key) => {
         const bit = status & 0x01;
         acc[key] = !!bit;
         status >>= 1;

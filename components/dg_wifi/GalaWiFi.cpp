@@ -21,6 +21,51 @@ char ipStr[16];
  *
  * @return true if successful, false otherwise
  */
+bool initAP() {
+  WiFi.mode(WIFI_AP);
+  while(!WiFi.softAP(ssid, password)) {
+    ESP_LOGE(TAG, "Soft AP creation failed.\r\n");
+    ESP_LOGI(TAG, "Try setting up the WIFI again.\r\n");
+    ESP_LOGI(TAG, "Tried to connect to %s with password %s\r\n", ssid, password);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+  } 
+  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0)); // Set the IP address and gateway of the AP
+
+  ESP_LOGI(TAG, "Setting up the AP ...");
+  IPAddress myIP = WiFi.softAPIP();
+  ESP_LOGI(TAG, "AP IP address: ");
+  sprintf(ipStr, "%d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);
+  ESP_LOGI(TAG, "%s\r\n", ipStr);
+
+  return true;
+}
+
+/**
+ * Initialize the WIFI station.
+ *
+ * This will initialize the WIFI station and set up the IP address.
+ *
+ * @return true if successful, false otherwise
+ */
+bool initSTA() {
+  WiFi.mode(WIFI_STA);
+  ESP_LOGI(TAG, "Connecting to the WIFI ...");
+  while(!WiFi.begin(ssid, password)) {
+    ESP_LOGE(TAG, "Failed to connect to the WIFI.\r\n");
+    ESP_LOGI(TAG, "Try setting up the WIFI again.\r\n");
+    ESP_LOGI(TAG, "Tried to connect to %s with password %s\r\n", ssid, password);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+  }
+  return true;
+}
+
+/**
+ * Initialize the WIFI access point.
+ *
+ * This will initialize the WIFI access point and set up the IP address.
+ *
+ * @return true if successful, false otherwise
+ */
 bool GalaWiFiInit()
 {
   ESP_LOGI(TAG, "Initializing the WIFI ...");
@@ -32,21 +77,15 @@ bool GalaWiFiInit()
     ret = nvs_flash_init();
   }
   ESP_ERROR_CHECK(ret);
-  
-  WiFi.mode(WIFI_AP); 
-  esp_wifi_set_ps(WIFI_PS_NONE);
-  while(!WiFi.softAP(ssid, password)) {
-    ESP_LOGE(TAG, "Soft AP creation failed.\r\n");
-    ESP_LOGI(TAG, "Try setting up the WIFI again.\r\n");
-    ESP_LOGI(TAG, "Tried to connect to %s with password %s\r\n", ssid, password);
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
-  } 
-  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0)); // Set the IP address and gateway of the AP
-  
-  IPAddress myIP = WiFi.softAPIP();
-  ESP_LOGI(TAG, "AP IP address: ");
-  sprintf(ipStr, "%d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);
-  ESP_LOGI(TAG, "%s\r\n", ipStr);
-    
-  return true;
+
+  esp_wifi_set_ps(WIFI_PS_LEVEL);
+
+  if (WIFI_MODE == WIFI_AP) {
+    return initAP();
+  } else if (WIFI_MODE == WIFI_STA) {
+    return initSTA();
+  } else {
+    ESP_LOGE(TAG, "Invalid WiFi mode: %d", WIFI_MODE);
+  }
+  return false;
 }
