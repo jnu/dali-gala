@@ -39,7 +39,7 @@ extern "C" {
  */
 int16_t GalaDALICheckStatus(uint8_t addr)
 {
-  return dali.cmd(0x90, addr);
+  return dali.cmd(DALI_QUERY_STATUS, addr);
 }
 
 
@@ -86,6 +86,47 @@ void GalaDALIAllOff() {
 }
 
 /**
+ * Set the level of a device.
+ *
+ * @param level The level to set.
+ * @param addr The address of the device to set.
+ */
+void GalaDALISetLevel(uint8_t addr, uint8_t level) {
+  ESP_LOGI(TAG, "set level %d for device %d", level, addr);
+  dali.set_level(level, addr);
+}
+
+void GalaDALISetDTR(uint8_t dtr, uint8_t addr, uint8_t value) {
+  ESP_LOGI(TAG, "set DTR %d for device %d to %d", dtr, addr, value);
+  switch (dtr) {
+    case 0:
+      dali.set_dtr0(value, addr);
+      break;
+    case 1:
+      dali.set_dtr1(value, addr);
+      break;
+    case 2:
+      dali.set_dtr2(value, addr);
+      break;
+    default:
+      ESP_LOGE(TAG, "Invalid DTR: %d", dtr);
+      break;
+  }
+}
+
+/**
+ * Execute a DALI command.
+ *
+ * @param cmd The command to execute.
+ * @param arg The argument to the command.
+ * @return The result of the command.
+ */
+int16_t GalaDALICmd(uint16_t cmd, uint8_t arg) {
+  ESP_LOGI(TAG, "executing command %d with argument %d", cmd, arg);
+  return dali.cmd(cmd, arg);
+}
+
+/**
  * Commission all devices on the DALI bus.
  */
 void GalaDALICommission()
@@ -106,7 +147,7 @@ int16_t* GalaDALIScanAllAddresses() {
   DALI_ValidDevices = 0;
 
   for (uint8_t addr = 0; addr < 64; addr++) {
-    int16_t status = dali.cmd(0x90, addr);
+    int16_t status = dali.cmd(DALI_QUERY_STATUS, addr);
     DALI_Devices[addr] = status;
     if (status & 0x01) {
       DALI_ValidDevices++;

@@ -82,6 +82,22 @@ export const allLightsOff = async () => {
 }
 
 /**
+ * Set a specific light to a specific level.
+ * 
+ * @param address 
+ * @param level 
+ */
+export const setLightLevel = async (address: number, level: number) => {
+    await fetch('/api/v1/devices', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ state: level > 0, addr: address, level }),
+    });
+}
+
+/**
  * Get the status of a device.
  * 
  * @param address - The short address of the device to get the status of.
@@ -98,6 +114,45 @@ export const getDeviceStatus = async (address: number): Promise<Device> => {
         shortAddress: address,
         status,
     };
+}
+
+/**
+ * Execute a DALI command.
+ * 
+ * @param cmd 
+ * @param arg 
+ * @returns 
+ */
+export const executeCommand = async (cmd: number, arg: number): Promise<number> => {
+    const response = await fetch('/api/v1/cmd', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cmd, arg }),
+    });
+    const json = await response.json() as { result: number } | GalaAPIErrorResponse;
+    if ('error' in json) {
+        throw new Error(json.error);
+    }
+    return json.result;
+}
+
+/**
+ * Set the DTR of a device.
+ * 
+ * @param dtr 
+ * @param address 
+ * @param value 
+ */
+export const setDTR = async (dtr: number, address: number, value: number) => {
+    await fetch('/api/v1/dtr', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ dtr, addr: address, value }),
+    });
 }
 
 /**

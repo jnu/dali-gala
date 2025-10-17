@@ -1,16 +1,22 @@
 <script lang="ts">
     import {Button} from "$lib/components/ui/button";
-    import { allLightsOn, allLightsOff } from "$lib/gala";
+    import { Slider } from "$lib/components/ui/slider";
+    import * as gala from "$lib/gala";
     import type { PageData } from './$types';
 
     let { data }: { data: PageData } = $props();
+
+    if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window['gala'] = gala;
+    }
 </script>
 
 <h1>DALI/Gala</h1>
 
 <div class="mb-6">
-    <Button onclick={allLightsOn} class="cursor-pointer mr-2">All Lights On</Button>
-    <Button onclick={allLightsOff} class="cursor-pointer">All Lights Off</Button>
+    <Button onclick={gala.allLightsOn} class="cursor-pointer mr-2">All Lights On</Button>
+    <Button onclick={gala.allLightsOff} class="cursor-pointer">All Lights Off</Button>
 </div>
 
 {#if data.error}
@@ -45,6 +51,9 @@
                             {:else}
                             {#if device.status.portOneConnected || device.status.portTwoConnected}
                                 <div class="mt-1 flex flex-wrap justify-center gap-1">
+                                    <div class="w-full">
+                                        <Slider type="single" min={0} max={254} step={1} onValueCommit={(value: number) => gala.setLightLevel(device.shortAddress, value)} />
+                                    </div>
                                     <!-- Status indicators as small badges - only show when device is connected -->
                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.portOneConnected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                                         P1

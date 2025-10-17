@@ -45,15 +45,40 @@ void handleLights(AsyncWebServerRequest *request, JsonVariant &json)
 {
   AsyncResponseStream *response = request->beginResponseStream("application/json");
   bool state = json.as<JsonObject>()["state"];
+  bool broadcast = false;
+  bool levelSet = false;
+  uint addr = 0xFF;
+  uint level = 0;
+  
+  // Check if `addr` is provided in the request.
+  if(json.as<JsonObject>().containsKey("addr")) {
+    addr = json.as<JsonObject>()["addr"];
+    broadcast = false;
+  }
 
-  ESP_LOGI(TAG, "Setting all lamps to: %d\n", state);
-  // TODO - check if state is valid
+  if(json.as<JsonObject>().containsKey("level")) {
+    level = json.as<JsonObject>()["level"];
+    levelSet = true;
+  }
 
-  // Set lights state
-  if(state) {
-    GalaDALIAllOn();
+  if (broadcast) {
+    ESP_LOGI(TAG, "Setting all lamps to: %d\n", state);
+    if (state) {
+      GalaDALIAllOn();
+    } else {
+      GalaDALIAllOff();
+    }
+    // TODO handle level
   } else {
-    GalaDALIAllOff();
+    ESP_LOGI(TAG, "Setting lamp %d to: %d\n", addr, level);
+    if (!levelSet) {
+      if (state) {
+        level = 254;
+      } else {
+        level = 0;
+      }
+    }
+    GalaDALISetLevel(addr, level);
   }
 
   response->print("{\"success\": true}");
@@ -64,6 +89,27 @@ void handleCommission(AsyncWebServerRequest *request)
 {
   GalaDALICommission();
   request->send(200, "application/json", "{\"success\": true}");
+}
+
+void handleSetDTR(AsyncWebServerRequest *request, JsonVariant &json)
+{
+  AsyncResponseStream *response = request->beginResponseStream("application/json");
+  uint8_t dtr = json.as<JsonObject>()["dtr"];
+  uint8_t addr = json.as<JsonObject>()["addr"];
+  uint8_t value = json.as<JsonObject>()["value"];
+  GalaDALISetDTR(dtr, addr, value);
+  response->print("{\"success\": true}");
+  request->send(response);
+}
+
+void handleCmd(AsyncWebServerRequest *request, JsonVariant &json)
+{
+  AsyncResponseStream *response = request->beginResponseStream("application/json");
+  uint16_t cmd = json.as<JsonObject>()["cmd"];
+  uint8_t arg = json.as<JsonObject>()["arg"];
+  int16_t result = GalaDALICmd(cmd, arg);
+  response->print("{\"success\": true, \"result\": " + String(result) + "}");
+  request->send(response);
 }
 
 /**
@@ -90,7 +136,16 @@ bool GalaWebServerInit(void)
       lightsHandler->setMethod(HTTP_POST);
       lightsHandler->setMaxContentLength(1024);
       server.addHandler(lightsHandler);
-    
+
+      AsyncCallbackJsonWebHandler* setDTRHandler = new AsyncCallbackJsonWebHandler("/api/v1/dtr", handleSetDTR);
+      setDTRHandler->setMethod(HTTP_POST);
+      setDTRHandler->setMaxContentLength(1024);
+      server.addHandler(setDTRHandler);
+
+      AsyncCallbackJsonWebHandler* cmdHandler = new AsyncCallbackJsonWebHandler("/api/v1/cmd", handleCmd);
+      cmdHandler->setMethod(HTTP_POST);
+      cmdHandler->setMaxContentLength(1024);
+      server.addHandler(cmdHandler);
 
       server.on(
         "^\\/api\\/v1\\/commission$",
