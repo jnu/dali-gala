@@ -139,19 +139,18 @@ export const executeCommand = async (cmd: number, arg: number): Promise<number> 
 }
 
 /**
- * Set the DTR of a device.
+ * Set the CCT of a device.
  * 
- * @param dtr 
  * @param address 
  * @param value 
  */
-export const setDTR = async (dtr: number, address: number, value: number) => {
-    await fetch('/api/v1/dtr', {
+export const setCCT = async (address: number, value: number) => {
+    await fetch('/api/v1/cct', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ dtr, addr: address, value }),
+        body: JSON.stringify({ addr: address, value }),
     });
 }
 

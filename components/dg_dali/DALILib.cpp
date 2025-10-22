@@ -498,24 +498,26 @@ void Dali::set_level(uint8_t level, uint8_t adr)
 
 int16_t Dali::cmd(uint16_t cmd, uint8_t arg)
 {
-    // Serial.print("dali_cmd[");Serial.print(cmd,HEX);Serial.print(",");Serial.print(arg,HEX);Serial.print(")");
+    ESP_LOGI(TAG, "Dali::cmd(%d, %d)", cmd, arg);
     uint8_t cmd0, cmd1;
     if (cmd & 0x0100) {
         // special commands: MUST NOT have YAAAAAAX pattern for cmd
-        ESP_LOGI(TAG, "Special command %d with argument %d", cmd, arg);
         if (!_check_yaaaaaa(cmd >> 1)) {
             cmd0 = cmd;
             cmd1 = arg;
+            ESP_LOGI(TAG, "Special command %d with argument %d", cmd0, cmd1);
         } else {
+            ESP_LOGE(TAG, "Special command %d with argument %d is not valid", cmd, arg);
             return DALI_RESULT_INVALID_CMD;
         }
     } else {
         // regular commands: MUST have YAAAAAA pattern for arg
-        ESP_LOGI(TAG, "Regular command %d with argument %d", cmd, arg);
         if (_check_yaaaaaa(arg)) {
             cmd0 = arg << 1 | 1;
             cmd1 = cmd;
+            ESP_LOGI(TAG, "Regular command %d with argument %d", cmd1, cmd0);
         } else {
+            ESP_LOGE(TAG, "Regular command %d with argument %d is not valid", cmd, arg);
             return DALI_RESULT_INVALID_CMD;
         }
     }
@@ -524,7 +526,7 @@ int16_t Dali::cmd(uint16_t cmd, uint8_t arg)
         tx_wait_rx(cmd0, cmd1);
     }
     int16_t rv = tx_wait_rx(cmd0, cmd1);
-    ESP_LOGI(TAG, "Command %d with argument %d returned %d", cmd, arg, rv);
+    ESP_LOGI(TAG, "Command %d with argument %d returned %d", cmd0, cmd1, rv);
     return rv;
 }
 
@@ -564,13 +566,15 @@ uint8_t Dali::set_temperature(uint8_t addr, uint16_t temperature)
 {
     // Store two bytes from temperature into DTR0 and DTR1
     uint8_t lower_byte = temperature & 0xFF;
-    uint8_t higher_byte = v >> 8;
+    uint8_t higher_byte = temperature >> 8;
 
-    if (_set_register_value(0, lower_byte, addr) != 0) {
+    if (_set_register_value(0, addr, lower_byte) != 0) {
+        ESP_LOGE(TAG, "Failed to set lower byte of temperature for device %d", addr);
         return 1;
     }
 
-    if (_set_register_value(1, higher_byte, addr) != 0) {
+    if (_set_register_value(1, addr, higher_byte) != 0) {
+        ESP_LOGE(TAG, "Failed to set higher byte of temperature for device %d", addr);
         return 2;
     }
 
@@ -582,7 +586,7 @@ uint8_t Dali::set_temperature(uint8_t addr, uint16_t temperature)
     cmd(0x03C1, 8);
     // Active temperature
     cmd(0x00E2, 0);
-    
+
     return 0;
 }
 
@@ -596,7 +600,7 @@ uint8_t Dali::set_temperature(uint8_t addr, uint16_t temperature)
  * @param two_bytes Whether this is a single or double byte parameter.
  * @return 0 on success
  */
-uint8_t Dali::_set_value(uint16_t setcmd, uint16_t getcmd, uint8_t addr, uint8_t v) {
+uint8_t Dali::_set_value(uint16_t setcmd, uint16_t getcmd, uint8_t addr, uint8_t v)
 {
     // Check if value is already set and short circuit if so
     int16_t current_v = cmd(getcmd, addr);
@@ -605,7 +609,7 @@ uint8_t Dali::_set_value(uint16_t setcmd, uint16_t getcmd, uint8_t addr, uint8_t
     }
     
     // Transfer value to temporary register
-    if (_set_register_value(0, v, addr) != 0) {
+    if (_set_register_value(0, addr, v) != 0) {
         return 1;
     }
 
@@ -625,11 +629,11 @@ uint8_t Dali::_set_value(uint16_t setcmd, uint16_t getcmd, uint8_t addr, uint8_t
  * Set a value in a DTR register for a specific device.
  * 
  * @param dtr The DTR register to set the value in.
- * @param value The value to set in the register.
  * @param addr The address of the device to set the value for.
+ * @param value The value to set in the register.
  * @return 0 on success, 1 on failure, 2 on failure to update on specific device.
  */
-uint8_t Dali::_set_register_value(uint8_t dtr, uint8_t value, uint8_t addr)
+uint8_t Dali::_set_register_value(uint8_t dtr, uint8_t addr, uint8_t value)
 {
     uint16_t setcmd;
     uint16_t getcmd;
@@ -655,8 +659,8 @@ uint8_t Dali::_set_register_value(uint8_t dtr, uint8_t value, uint8_t addr)
     cmd(setcmd, value);
 
     // Check that update was successful on specific device
-    int16_t dtr = cmd(getcmd, addr);
-    if (dtr != value) {
+    int16_t current_value = cmd(getcmd, addr);
+    if (current_value != value) {
         return 2;
     }
 
@@ -823,7 +827,7 @@ uint8_t Dali::set_dtr0(uint8_t value, uint8_t adr)
 {
     uint8_t retry = 3;
     while (retry) {
-        if (!_set_register_value(0, value, adr)) {
+        if (!_set_register_value(0, adr, value)) {
             return 0;
         }
         retry--;
@@ -835,7 +839,7 @@ uint8_t Dali::set_dtr1(uint8_t value, uint8_t adr)
 {
     uint8_t retry = 3;
     while (retry) {
-        if (!_set_register_value(1, value, adr)) {
+        if (!_set_register_value(1, adr, value)) {
             return 0;
         }
         retry--;
@@ -847,7 +851,7 @@ uint8_t Dali::set_dtr2(uint8_t value, uint8_t adr)
 {
     uint8_t retry = 3;
     while (retry) {
-        if (!_set_register_value(2, value, adr)) {
+        if (!_set_register_value(2, adr, value)) {
             return 0;
         }
         retry--;

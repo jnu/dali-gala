@@ -101,7 +101,8 @@ void handleSetCCT(AsyncWebServerRequest *request, JsonVariant &json)
     sendError(request, 500, "Failed to set CCT");
     return;
   }
-  request->send(200, "application/json", "{\"success\": true}");
+  response->print("{\"success\": true}");
+  request->send(response);
 }
 
 void handleCmd(AsyncWebServerRequest *request, JsonVariant &json)
@@ -139,9 +140,9 @@ bool GalaWebServerInit(void)
       lightsHandler->setMaxContentLength(1024);
       server.addHandler(lightsHandler);
 
-      AsyncCallbackJsonWebHandler* setDTRHandler = new AsyncCallbackJsonWebHandler("/api/v1/cct", handleSetCCT);
-      setDTRHandler->setMethod(HTTP_POST);
-      setDTRHandler->setMaxContentLength(1024);
+      AsyncCallbackJsonWebHandler* setCCTHandler = new AsyncCallbackJsonWebHandler("/api/v1/cct", handleSetCCT);
+      setCCTHandler->setMethod(HTTP_POST);
+      setCCTHandler->setMaxContentLength(1024);
       server.addHandler(setCCTHandler);
 
       AsyncCallbackJsonWebHandler* cmdHandler = new AsyncCallbackJsonWebHandler("/api/v1/cmd", handleCmd);
