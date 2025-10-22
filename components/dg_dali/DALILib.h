@@ -68,6 +68,7 @@ public:
   //-------------------------------------------------
   //HIGH LEVEL PUBLIC
   void     set_level(uint8_t level, uint8_t adr=0xFF); //set arc level
+  uint8_t  set_temperature(uint8_t addr, uint16_t temperature); // set color temperature
   int16_t  cmd(uint16_t cmd, uint8_t arg); //execute DALI command, use a DALI_xxx command define as cmd argument, returns negative DALI_RESULT_xxx or reply byte
   uint8_t  set_operating_mode(uint8_t v, uint8_t adr=0xFF); //returns 0 on success
   uint8_t  set_max_level(uint8_t v, uint8_t adr=0xFF); //returns 0 on success
@@ -137,6 +138,7 @@ private:
   //HIGH LEVEL PRIVATE
   uint8_t _check_yaaaaaa(uint8_t yaaaaaa); //check for yaaaaaa pattern
   uint8_t _set_value(uint16_t setcmd, uint16_t getcmd, uint8_t v, uint8_t adr); //set a parameter value, returns 0 on success
+  uint8_t _set_register_value(uint8_t dtr, uint8_t value, uint8_t addr);
 };
 
 

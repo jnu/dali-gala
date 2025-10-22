@@ -46,7 +46,7 @@ Changelog:
 #define TX 3
 #define COLLISION_TX 4
 
-static const char* TAG = "qqqdali";
+static const char* TAG = "DALILib";
 
 
 void Dali::begin(uint8_t (*bus_is_high)(), void (*bus_set_low)(), void (*bus_set_high)())
@@ -502,7 +502,7 @@ int16_t Dali::cmd(uint16_t cmd, uint8_t arg)
     uint8_t cmd0, cmd1;
     if (cmd & 0x0100) {
         // special commands: MUST NOT have YAAAAAAX pattern for cmd
-        // Serial.print(" SPC");
+        ESP_LOGI(TAG, "Special command %d with argument %d", cmd, arg);
         if (!_check_yaaaaaa(cmd >> 1)) {
             cmd0 = cmd;
             cmd1 = arg;
@@ -511,8 +511,7 @@ int16_t Dali::cmd(uint16_t cmd, uint8_t arg)
         }
     } else {
         // regular commands: MUST have YAAAAAA pattern for arg
-
-        // Serial.print(" REG");
+        ESP_LOGI(TAG, "Regular command %d with argument %d", cmd, arg);
         if (_check_yaaaaaa(arg)) {
             cmd0 = arg << 1 | 1;
             cmd1 = cmd;
@@ -521,53 +520,146 @@ int16_t Dali::cmd(uint16_t cmd, uint8_t arg)
         }
     }
     if (cmd & 0x0200) {
-        // Serial.print(" REPEAT");
+        ESP_LOGI(TAG, "REPEAT command %d with argument %d", cmd0, cmd1);
         tx_wait_rx(cmd0, cmd1);
     }
     int16_t rv = tx_wait_rx(cmd0, cmd1);
-    // Serial.print(" rv=");Serial.println(rv);
+    ESP_LOGI(TAG, "Command %d with argument %d returned %d", cmd, arg, rv);
     return rv;
 }
 
 uint8_t Dali::set_operating_mode(uint8_t v, uint8_t adr)
 {
-    return _set_value(DALI_SET_OPERATING_MODE, DALI_QUERY_OPERATING_MODE, v, adr);
+    return _set_value(DALI_SET_OPERATING_MODE, DALI_QUERY_OPERATING_MODE, adr, v);
 }
 
 uint8_t Dali::set_max_level(uint8_t v, uint8_t adr)
 {
-    return _set_value(DALI_SET_MAX_LEVEL, DALI_QUERY_MAX_LEVEL, v, adr);
+    return _set_value(DALI_SET_MAX_LEVEL, DALI_QUERY_MAX_LEVEL, adr, v);
 }
 
 uint8_t Dali::set_min_level(uint8_t v, uint8_t adr)
 {
-    return _set_value(DALI_SET_MIN_LEVEL, DALI_QUERY_MIN_LEVEL, v, adr);
+    return _set_value(DALI_SET_MIN_LEVEL, DALI_QUERY_MIN_LEVEL, adr, v);
 }
 
 uint8_t Dali::set_system_failure_level(uint8_t v, uint8_t adr)
 {
-    return _set_value(DALI_SET_SYSTEM_FAILURE_LEVEL, DALI_QUERY_SYSTEM_FAILURE_LEVEL, v, adr);
+    return _set_value(DALI_SET_SYSTEM_FAILURE_LEVEL, DALI_QUERY_SYSTEM_FAILURE_LEVEL, adr, v);
 }
 
 uint8_t Dali::set_power_on_level(uint8_t v, uint8_t adr)
 {
-    return _set_value(DALI_SET_POWER_ON_LEVEL, DALI_QUERY_POWER_ON_LEVEL, v, adr);
+    return _set_value(DALI_SET_POWER_ON_LEVEL, DALI_QUERY_POWER_ON_LEVEL, adr, v);
 }
 
-// set a parameter value, returns 0 on success
-uint8_t Dali::_set_value(uint16_t setcmd, uint16_t getcmd, uint8_t v, uint8_t adr)
+/**
+ * Set the color temperature of a device.
+ * 
+ * @param addr The address of the device to set the temperature for.
+ * @param temperature The temperature to set.
+ * @return 0 on success
+ */
+uint8_t Dali::set_temperature(uint8_t addr, uint16_t temperature)
 {
-    int16_t current_v = cmd(getcmd, adr); // get current parameter value
-    if (current_v == v)
-        return 0;
-    cmd(DALI_DATA_TRANSFER_REGISTER0, v); // store value in DTR
-    int16_t dtr = cmd(DALI_QUERY_CONTENT_DTR0, adr); // get DTR value
-    if (dtr != v)
+    // Store two bytes from temperature into DTR0 and DTR1
+    uint8_t lower_byte = temperature & 0xFF;
+    uint8_t higher_byte = v >> 8;
+
+    if (_set_register_value(0, lower_byte, addr) != 0) {
         return 1;
-    cmd(setcmd, adr); // set parameter value = DTR
-    current_v = cmd(getcmd, adr); // get current parameter value
-    if (current_v != v)
+    }
+
+    if (_set_register_value(1, higher_byte, addr) != 0) {
         return 2;
+    }
+
+    // Enable device type 8
+    cmd(0x03C1, 8);
+    // Load temperature from DTR
+    cmd(0x00E7, addr);
+    // Enable device type 8
+    cmd(0x03C1, 8);
+    // Active temperature
+    cmd(0x00E2, 0);
+    
+    return 0;
+}
+
+/**
+ * Set a value that uses DTR to update.
+ * 
+ * @param setcmd The command to set the value.
+ * @param getcmd The command to get the value.
+ * @param addr The address of the device to set the value for.
+ * @param v The value to set.
+ * @param two_bytes Whether this is a single or double byte parameter.
+ * @return 0 on success
+ */
+uint8_t Dali::_set_value(uint16_t setcmd, uint16_t getcmd, uint8_t addr, uint8_t v) {
+{
+    // Check if value is already set and short circuit if so
+    int16_t current_v = cmd(getcmd, addr);
+    if (current_v == v) {
+        return 0;
+    }
+    
+    // Transfer value to temporary register
+    if (_set_register_value(0, v, addr) != 0) {
+        return 1;
+    }
+
+    // Request device update from DTR0
+    cmd(setcmd, addr);
+
+    // Check on update
+    current_v = cmd(getcmd, addr);
+    if (current_v != v) {
+        return 2;
+    }
+
+    return 0;
+}
+
+/**
+ * Set a value in a DTR register for a specific device.
+ * 
+ * @param dtr The DTR register to set the value in.
+ * @param value The value to set in the register.
+ * @param addr The address of the device to set the value for.
+ * @return 0 on success, 1 on failure, 2 on failure to update on specific device.
+ */
+uint8_t Dali::_set_register_value(uint8_t dtr, uint8_t value, uint8_t addr)
+{
+    uint16_t setcmd;
+    uint16_t getcmd;
+    switch (dtr) {
+    case 0:
+        setcmd = DALI_DATA_TRANSFER_REGISTER0;
+        getcmd = DALI_QUERY_CONTENT_DTR0;
+        break;
+    case 1:
+        setcmd = DALI_DATA_TRANSFER_REGISTER1;
+        getcmd = DALI_QUERY_CONTENT_DTR1;
+        break;
+    case 2:
+        setcmd = DALI_DATA_TRANSFER_REGISTER2;
+        getcmd = DALI_QUERY_CONTENT_DTR2;
+        break;
+    default:
+        ESP_LOGE(TAG, "Invalid register: %d", dtr);
+        return 1;
+    }
+
+    // Broadcast value on register for all devices to update
+    cmd(setcmd, value);
+
+    // Check that update was successful on specific device
+    int16_t dtr = cmd(getcmd, addr);
+    if (dtr != value) {
+        return 2;
+    }
+
     return 0;
 }
 
@@ -731,10 +823,9 @@ uint8_t Dali::set_dtr0(uint8_t value, uint8_t adr)
 {
     uint8_t retry = 3;
     while (retry) {
-        cmd(DALI_DATA_TRANSFER_REGISTER0, value); // store value in DTR
-        int16_t dtr = cmd(DALI_QUERY_CONTENT_DTR0, adr); // get DTR value
-        if (dtr == value)
+        if (!_set_register_value(0, value, adr)) {
             return 0;
+        }
         retry--;
     }
     return 1;
@@ -744,10 +835,9 @@ uint8_t Dali::set_dtr1(uint8_t value, uint8_t adr)
 {
     uint8_t retry = 3;
     while (retry) {
-        cmd(DALI_DATA_TRANSFER_REGISTER1, value); // store value in DTR
-        int16_t dtr = cmd(DALI_QUERY_CONTENT_DTR1, adr); // get DTR value
-        if (dtr == value)
+        if (!_set_register_value(1, value, adr)) {
             return 0;
+        }
         retry--;
     }
     return 1;
@@ -757,10 +847,9 @@ uint8_t Dali::set_dtr2(uint8_t value, uint8_t adr)
 {
     uint8_t retry = 3;
     while (retry) {
-        cmd(DALI_DATA_TRANSFER_REGISTER2, value); // store value in DTR
-        int16_t dtr = cmd(DALI_QUERY_CONTENT_DTR2, adr); // get DTR value
-        if (dtr == value)
+        if (!_set_register_value(2, value, adr)) {
             return 0;
+        }
         retry--;
     }
     return 1;
