@@ -5,17 +5,14 @@ static const char *TAG = "GalaWebServer";
 
 static AsyncWebServer server(CONFIG_WEB_SERVER_PORT);
 
-
-void sendError(AsyncWebServerRequest *request,int code, String message)
-{
+void sendError(AsyncWebServerRequest *request, int code, String message) {
   // TODO: better serialization. Can't handle quotes right now.
   String body = "{\"error\": \"" + message + "\", \"code\": " + code + "}";
   request->send(code, "application/json", body);
 }
 
-void handleAddressesQuery(AsyncWebServerRequest *request)
-{
-  int16_t* devices = GalaDALIScanAllAddresses();
+void handleAddressesQuery(AsyncWebServerRequest *request) {
+  int16_t *devices = GalaDALIScanAllAddresses();
   // Return a list of all device statuses
   String body = "{\"statuses\": [";
   for (uint8_t i = 0; i < 64; i++) {
@@ -28,11 +25,10 @@ void handleAddressesQuery(AsyncWebServerRequest *request)
   request->send(200, "application/json", body);
 }
 
-void handleAddressQuery(AsyncWebServerRequest *request)
-{
+void handleAddressQuery(AsyncWebServerRequest *request) {
   String address = request->pathArg(0);
   uint addr = address.toInt();
-  
+
   int16_t state = GalaDALICheckStatus(addr);
   String body = "{\"status\":" + String(state) + "}";
   request->send(200, "application/json", body);
@@ -41,22 +37,22 @@ void handleAddressQuery(AsyncWebServerRequest *request)
 /**
  * Handle lights request.
  */
-void handleLights(AsyncWebServerRequest *request, JsonVariant &json)
-{
-  AsyncResponseStream *response = request->beginResponseStream("application/json");
+void handleLights(AsyncWebServerRequest *request, JsonVariant &json) {
+  AsyncResponseStream *response =
+      request->beginResponseStream("application/json");
   bool state = json.as<JsonObject>()["state"];
   bool broadcast = false;
   bool levelSet = false;
   uint addr = 0xFF;
   uint level = 0;
-  
+
   // Check if `addr` is provided in the request.
-  if(json.as<JsonObject>().containsKey("addr")) {
+  if (json.as<JsonObject>().containsKey("addr")) {
     addr = json.as<JsonObject>()["addr"];
     broadcast = false;
   }
 
-  if(json.as<JsonObject>().containsKey("level")) {
+  if (json.as<JsonObject>().containsKey("level")) {
     level = json.as<JsonObject>()["level"];
     levelSet = true;
   }
@@ -85,15 +81,14 @@ void handleLights(AsyncWebServerRequest *request, JsonVariant &json)
   request->send(response);
 }
 
-void handleCommission(AsyncWebServerRequest *request)
-{
+void handleCommission(AsyncWebServerRequest *request) {
   GalaDALICommission();
   request->send(200, "application/json", "{\"success\": true}");
 }
 
-void handleSetCCT(AsyncWebServerRequest *request, JsonVariant &json)
-{
-  AsyncResponseStream *response = request->beginResponseStream("application/json");
+void handleSetCCT(AsyncWebServerRequest *request, JsonVariant &json) {
+  AsyncResponseStream *response =
+      request->beginResponseStream("application/json");
   uint8_t addr = json.as<JsonObject>()["addr"];
   uint16_t value = json.as<JsonObject>()["value"];
   uint8_t result = GalaDALISetTemp(addr, value);
@@ -105,9 +100,9 @@ void handleSetCCT(AsyncWebServerRequest *request, JsonVariant &json)
   request->send(response);
 }
 
-void handleCmd(AsyncWebServerRequest *request, JsonVariant &json)
-{
-  AsyncResponseStream *response = request->beginResponseStream("application/json");
+void handleCmd(AsyncWebServerRequest *request, JsonVariant &json) {
+  AsyncResponseStream *response =
+      request->beginResponseStream("application/json");
   uint16_t cmd = json.as<JsonObject>()["cmd"];
   uint8_t arg = json.as<JsonObject>()["arg"];
   int16_t result = GalaDALICmd(cmd, arg);
@@ -122,54 +117,44 @@ void handleCmd(AsyncWebServerRequest *request, JsonVariant &json)
  *
  * @return true if successful, false otherwise
  */
-bool GalaWebServerInit(void)
-{
-    // Initialize the webapp
-    if (!GalaWebAppInit()) {
-        ESP_LOGI(TAG, "Failed to initialize the webapp");
-        return false;
-    }
+bool GalaWebServerInit(void) {
+  // Initialize the webapp
+  if (!GalaWebAppInit()) {
+    ESP_LOGI(TAG, "Failed to initialize the webapp");
+    return false;
+  }
 
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->redirect("/index.html");
-      });
-      server.serveStatic("/index.html", LittleFS, "/app.html");
-    
-      AsyncCallbackJsonWebHandler* lightsHandler = new AsyncCallbackJsonWebHandler("/api/v1/devices", handleLights);
-      lightsHandler->setMethod(HTTP_POST);
-      lightsHandler->setMaxContentLength(1024);
-      server.addHandler(lightsHandler);
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->redirect("/index.html");
+  });
+  server.serveStatic("/index.html", LittleFS, "/app.html");
 
-      AsyncCallbackJsonWebHandler* setCCTHandler = new AsyncCallbackJsonWebHandler("/api/v1/cct", handleSetCCT);
-      setCCTHandler->setMethod(HTTP_POST);
-      setCCTHandler->setMaxContentLength(1024);
-      server.addHandler(setCCTHandler);
+  AsyncCallbackJsonWebHandler *lightsHandler =
+      new AsyncCallbackJsonWebHandler("/api/v1/devices", handleLights);
+  lightsHandler->setMethod(HTTP_POST);
+  lightsHandler->setMaxContentLength(1024);
+  server.addHandler(lightsHandler);
 
-      AsyncCallbackJsonWebHandler* cmdHandler = new AsyncCallbackJsonWebHandler("/api/v1/cmd", handleCmd);
-      cmdHandler->setMethod(HTTP_POST);
-      cmdHandler->setMaxContentLength(1024);
-      server.addHandler(cmdHandler);
+  AsyncCallbackJsonWebHandler *setCCTHandler =
+      new AsyncCallbackJsonWebHandler("/api/v1/cct", handleSetCCT);
+  setCCTHandler->setMethod(HTTP_POST);
+  setCCTHandler->setMaxContentLength(1024);
+  server.addHandler(setCCTHandler);
 
-      server.on(
-        "^\\/api\\/v1\\/commission$",
-        HTTP_POST,
-        handleCommission
-      );
-    
-      server.on(
-        "^\\/api\\/v1\\/devices$",
-        HTTP_GET,
-        handleAddressesQuery
-      );
-      server.on(
-        "^\\/api\\/v1\\/devices\\/([0-9]+)$",
-        HTTP_GET,
-        handleAddressQuery
-      );
-    
-      server.begin();
-    
-      ESP_LOGI(TAG, "Web server started\n");
+  AsyncCallbackJsonWebHandler *cmdHandler =
+      new AsyncCallbackJsonWebHandler("/api/v1/cmd", handleCmd);
+  cmdHandler->setMethod(HTTP_POST);
+  cmdHandler->setMaxContentLength(1024);
+  server.addHandler(cmdHandler);
 
-      return true;
+  server.on("^\\/api\\/v1\\/commission$", HTTP_POST, handleCommission);
+
+  server.on("^\\/api\\/v1\\/devices$", HTTP_GET, handleAddressesQuery);
+  server.on("^\\/api\\/v1\\/devices\\/([0-9]+)$", HTTP_GET, handleAddressQuery);
+
+  server.begin();
+
+  ESP_LOGI(TAG, "Web server started\n");
+
+  return true;
 }

@@ -1,6 +1,7 @@
 #pragma once
-#include <Arduino.h>
 #include "DALILib.h"
+#include <Arduino.h>
+
 
 #define TX_PIN 17
 #define RX_PIN 14
@@ -9,8 +10,8 @@
 extern "C" {
 #endif
 
-bool GalaDALIInit(); 
-int16_t* GalaDALIScanAllAddresses();
+bool GalaDALIInit();
+int16_t *GalaDALIScanAllAddresses();
 int16_t GalaDALICheckStatus(uint8_t addr);
 void GalaDALIAllOn();
 void GalaDALIAllOff();
