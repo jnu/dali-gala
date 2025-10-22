@@ -51,8 +51,11 @@
                             {:else}
                             {#if device.status.portOneConnected || device.status.portTwoConnected}
                                 <div class="mt-1 flex flex-wrap justify-center gap-1">
-                                    <div class="w-full">
+                                    <div class="w-full my-2">
                                         <Slider type="single" min={0} max={254} step={1} onValueCommit={(value: number) => gala.setLightLevel(device.shortAddress, value)} />
+                                    </div>
+                                    <div class="w-full my-2">
+                                        <Slider type="single" min={0} max={1000} step={1} onValueCommit={(value: number) => gala.setCCT(device.shortAddress, value)} />
                                     </div>
                                     <!-- Status indicators as small badges - only show when device is connected -->
                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {device.status.portOneConnected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">

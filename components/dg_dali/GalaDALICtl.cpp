@@ -152,6 +152,26 @@ int16_t *GalaDALIScanAllAddresses() {
   return DALI_Devices;
 }
 
+/**
+ * Get the current level of a device.
+ *
+ * @param addr The address of the device to get the level of.
+ * @return The current level of the device.
+ */
+int16_t GalaDALIGetLevel(uint8_t addr) {
+  return dali.get_level(addr);
+}
+
+/**
+ * Get the current color temperature of a device.
+ *
+ * @param addr The address of the device to get the temperature of.
+ * @return The current temperature of the device.
+ */
+int16_t GalaDALIGetTemp(uint8_t addr) {
+  return dali.get_temperature(addr);
+}
+
 #ifdef __cplusplus
 }
 #endif

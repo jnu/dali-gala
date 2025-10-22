@@ -30,7 +30,9 @@ void handleAddressQuery(AsyncWebServerRequest *request) {
   uint addr = address.toInt();
 
   int16_t state = GalaDALICheckStatus(addr);
-  String body = "{\"status\":" + String(state) + "}";
+  int16_t level = GalaDALIGetLevel(addr);
+  int16_t temp = GalaDALIGetTemp(addr);
+  String body = "{\"status\":" + String(state) + ", \"level\":" + String(level) + ", \"temp\":" + String(temp) + "}";
   request->send(200, "application/json", body);
 }
 

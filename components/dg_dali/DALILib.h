@@ -60,22 +60,17 @@ public:
 
   //-------------------------------------------------
   // HIGH LEVEL PUBLIC
-  void set_level(uint8_t level, uint8_t adr = 0xFF); // set arc level
-  uint8_t set_temperature(uint8_t addr,
-                          uint16_t temperature); // set color temperature
-  int16_t cmd(uint16_t cmd_id,
-              uint8_t arg); // execute DALI command, use a DALI_xxx command
-                            // define as cmd argument, returns negative
-                            // DALI_RESULT_xxx or reply byte
-  int16_t cmd8(uint16_t cmd_id, uint8_t arg); // execute DT8 command
-  uint8_t set_operating_mode(uint8_t v,
-                             uint8_t adr = 0xFF);       // returns 0 on success
-  uint8_t set_max_level(uint8_t v, uint8_t adr = 0xFF); // returns 0 on success
-  uint8_t set_min_level(uint8_t v, uint8_t adr = 0xFF); // returns 0 on success
-  uint8_t set_system_failure_level(uint8_t v,
-                                   uint8_t adr = 0xFF); // returns 0 on success
-  uint8_t set_power_on_level(uint8_t v,
-                             uint8_t adr = 0xFF); // returns 0 on success
+  void set_level(uint8_t level, uint8_t adr = 0xFF);
+  int16_t get_level(uint8_t addr);
+  uint8_t set_temperature(uint8_t addr, uint16_t temperature);
+  int16_t get_temperature(uint8_t addr);
+  int16_t cmd(uint16_t cmd_id, uint8_t arg);
+  int16_t cmd8(uint16_t cmd_id, uint8_t arg);
+  uint8_t set_operating_mode(uint8_t v, uint8_t adr = 0xFF);
+  uint8_t set_max_level(uint8_t v, uint8_t adr = 0xFF);
+  uint8_t set_min_level(uint8_t v, uint8_t adr = 0xFF);
+  uint8_t set_system_failure_level(uint8_t v, uint8_t adr = 0xFF);
+  uint8_t set_power_on_level(uint8_t v, uint8_t adr = 0xFF);
   uint8_t tx_wait(uint8_t *data, uint8_t bitlen,
                   uint32_t timeout_ms = 500); // blocking transmit bytes
   int16_t
@@ -132,8 +127,8 @@ private:
   // hardware abstraction layer
   uint8_t (*bus_is_high)(); // returns !=0 if DALI bus is in high (non-asserted)
                             // state
-  void (*bus_set_low)();  // set DALI bus in low (asserted) state
-  void (*bus_set_high)(); // set DALI bus in high (released) state
+  void (*bus_set_low)();    // set DALI bus in low (asserted) state
+  void (*bus_set_high)();   // set DALI bus in high (released) state
 
   void _init();
   void _set_busstate_idle();
@@ -666,6 +661,8 @@ private:
 #define DALI_QUERY_REFERENCE_MEASURMENT_FAILED                                 \
   250 // 250 IEC62386-207 - Returns bit7 reference measurement failed  of
       // ‘FAILURE STATUS’ (Command that exist only in IEC62386-207)
+#define DALI_QUERY_COLOR_VALUE                                                 \
+  250 // 250 - Returns the MSB of the color value, with LSB in DTR0.
 #define DALI_QUERY_CURRENT_PROTECTOR_ENABLE                                    \
   251 // 251 IEC62386-207 - Returns state of Curent protector (Command that
       // exist only in IEC62386-207)
@@ -720,10 +717,12 @@ private:
   0x01C1 // 272  - Adds the device XXXX (a special device).
 #define DALI_ENABLE_DEVICE_TYPE                                                \
   0x03C1 // 272 - Enable device type for next command (arg should be 6 or 8).
-#define DALI_DATA_TRANSFER_REGISTER1 0x01C3 // 273  - Stores data XXXX into
-                                            // DTR1.
-#define DALI_DATA_TRANSFER_REGISTER2 0x01C5 // 274  - Stores data XXXX into
-                                            // DTR2.
+#define DALI_DATA_TRANSFER_REGISTER1                                           \
+  0x01C3 // 273  - Stores data XXXX into
+         // DTR1.
+#define DALI_DATA_TRANSFER_REGISTER2                                           \
+  0x01C5 // 274  - Stores data XXXX into
+         // DTR2.
 #define DALI_WRITE_MEMORY_LOCATION                                             \
   0x01C7 // 275  - Write data into the specified address of the specified memory
          // bank. (There is BW) (DTR(DTR0)：address, DTR1：memory bank number)

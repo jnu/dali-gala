@@ -19,7 +19,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-
 // timing
 #define BEFORE_CMD_IDLE_MS 13 // require 13ms idle time before sending a cmd()
 
@@ -480,6 +479,16 @@ void Dali::set_level(uint8_t level, uint8_t adr) {
     tx_wait_rx(adr << 1, level);
 }
 
+/**
+ * Get the actual level of a device.
+ *
+ * @param addr The address of the device to get the level of.
+ * @return The current level of the device.
+ */
+int16_t Dali::get_level(uint8_t addr) {
+  return cmd(DALI_QUERY_ACTUAL_LEVEL, addr);
+}
+
 int16_t Dali::cmd(uint16_t cmd_id, uint8_t arg) {
   ESP_LOGI(TAG, "Dali::cmd(%d, %d)", cmd_id, arg);
   uint8_t cmd0, cmd1;
@@ -488,9 +497,9 @@ int16_t Dali::cmd(uint16_t cmd_id, uint8_t arg) {
     if (!_check_yaaaaaa(cmd_id >> 1)) {
       cmd0 = cmd_id;
       cmd1 = arg;
-      ESP_LOGI(TAG, "Special command %d with argument %d", cmd0, cmd1);
+      ESP_LOGI(TAG, "SPECIAL cmd %d with argument %d", cmd0, cmd1);
     } else {
-      ESP_LOGE(TAG, "Special command %d with argument %d is not valid", cmd_id,
+      ESP_LOGE(TAG, "SPECIAL cmd %d with argument %d is not valid", cmd_id,
                arg);
       return DALI_RESULT_INVALID_CMD;
     }
@@ -499,19 +508,19 @@ int16_t Dali::cmd(uint16_t cmd_id, uint8_t arg) {
     if (_check_yaaaaaa(arg)) {
       cmd0 = arg << 1 | 1;
       cmd1 = cmd_id;
-      ESP_LOGI(TAG, "Regular command %d with argument %d", cmd1, cmd0);
+      ESP_LOGI(TAG, "REGULAR cmd %d with argument %d", cmd1, cmd0);
     } else {
-      ESP_LOGE(TAG, "Regular command %d with argument %d is not valid", cmd_id,
+      ESP_LOGE(TAG, "REGULAR cmd %d with argument %d is not valid", cmd_id,
                arg);
       return DALI_RESULT_INVALID_CMD;
     }
   }
   if (cmd_id & 0x0200) {
-    ESP_LOGI(TAG, "REPEAT command %d with argument %d", cmd0, cmd1);
+    ESP_LOGI(TAG, "REPEAT");
     tx_wait_rx(cmd0, cmd1);
   }
   int16_t rv = tx_wait_rx(cmd0, cmd1);
-  ESP_LOGI(TAG, "Command %d with argument %d returned %d", cmd0, cmd1, rv);
+  ESP_LOGI(TAG, "RETURN %d", rv);
   return rv;
 }
 
@@ -577,6 +586,28 @@ uint8_t Dali::set_temperature(uint8_t addr, uint16_t temperature) {
   cmd8(DALI_ACTIVATE_CCT, addr);
 
   return 0;
+}
+
+/**
+ * Get the color temperature of a device.
+ *
+ * @param addr The address of the device to get the temperature of.
+ * @return The current temperature of the device, or an error code.
+ */
+int16_t Dali::get_temperature(uint8_t addr) {
+  int16_t response = cmd8(DALI_QUERY_COLOR_VALUE, addr);
+  if (response < 0) {
+    return response;
+  }
+
+  // Load DTR0 to get the other half of the color value.
+  int16_t dtr_value = cmd(DALI_QUERY_CONTENT_DTR0, addr);
+  if (dtr_value < 0) {
+    return dtr_value;
+  }
+
+  // Combine the two halves of the color value.
+  return (response << 8) | (dtr_value & 0xff);
 }
 
 /**
