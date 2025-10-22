@@ -91,15 +91,17 @@ void handleCommission(AsyncWebServerRequest *request)
   request->send(200, "application/json", "{\"success\": true}");
 }
 
-void handleSetDTR(AsyncWebServerRequest *request, JsonVariant &json)
+void handleSetCCT(AsyncWebServerRequest *request, JsonVariant &json)
 {
   AsyncResponseStream *response = request->beginResponseStream("application/json");
-  uint8_t dtr = json.as<JsonObject>()["dtr"];
   uint8_t addr = json.as<JsonObject>()["addr"];
-  uint8_t value = json.as<JsonObject>()["value"];
-  GalaDALISetDTR(dtr, addr, value);
-  response->print("{\"success\": true}");
-  request->send(response);
+  uint16_t value = json.as<JsonObject>()["value"];
+  uint8_t result = GalaDALISetTemp(addr, value);
+  if (result != 0) {
+    sendError(request, 500, "Failed to set CCT");
+    return;
+  }
+  request->send(200, "application/json", "{\"success\": true}");
 }
 
 void handleCmd(AsyncWebServerRequest *request, JsonVariant &json)
@@ -137,10 +139,10 @@ bool GalaWebServerInit(void)
       lightsHandler->setMaxContentLength(1024);
       server.addHandler(lightsHandler);
 
-      AsyncCallbackJsonWebHandler* setDTRHandler = new AsyncCallbackJsonWebHandler("/api/v1/dtr", handleSetDTR);
+      AsyncCallbackJsonWebHandler* setDTRHandler = new AsyncCallbackJsonWebHandler("/api/v1/cct", handleSetCCT);
       setDTRHandler->setMethod(HTTP_POST);
       setDTRHandler->setMaxContentLength(1024);
-      server.addHandler(setDTRHandler);
+      server.addHandler(setCCTHandler);
 
       AsyncCallbackJsonWebHandler* cmdHandler = new AsyncCallbackJsonWebHandler("/api/v1/cmd", handleCmd);
       cmdHandler->setMethod(HTTP_POST);

@@ -96,22 +96,16 @@ void GalaDALISetLevel(uint8_t addr, uint8_t level) {
   dali.set_level(level, addr);
 }
 
-void GalaDALISetDTR(uint8_t dtr, uint8_t addr, uint8_t value) {
-  ESP_LOGI(TAG, "set DTR %d for device %d to %d", dtr, addr, value);
-  switch (dtr) {
-    case 0:
-      dali.set_dtr0(value, addr);
-      break;
-    case 1:
-      dali.set_dtr1(value, addr);
-      break;
-    case 2:
-      dali.set_dtr2(value, addr);
-      break;
-    default:
-      ESP_LOGE(TAG, "Invalid DTR: %d", dtr);
-      break;
-  }
+/**
+ * Set the color temperature of a device.
+ * 
+ * @param addr The address of the device to set the temperature for.
+ * @param value The temperature to set.
+ * @return 0 on success
+ */
+uint8_t GalaDALISetTemp(uint8_t addr, uint16_t value) {
+  ESP_LOGI(TAG, "set temp for device %d to %d", addr, value);
+  return dali.set_temperature(addr, value);
 }
 
 /**
