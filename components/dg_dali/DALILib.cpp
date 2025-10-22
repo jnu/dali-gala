@@ -496,38 +496,51 @@ void Dali::set_level(uint8_t level, uint8_t adr)
         tx_wait_rx(adr << 1, level);
 }
 
-int16_t Dali::cmd(uint16_t cmd, uint8_t arg)
+int16_t Dali::cmd(uint16_t cmd_id, uint8_t arg)
 {
-    ESP_LOGI(TAG, "Dali::cmd(%d, %d)", cmd, arg);
+    ESP_LOGI(TAG, "Dali::cmd(%d, %d)", cmd_id, arg);
     uint8_t cmd0, cmd1;
-    if (cmd & 0x0100) {
+    if (cmd_id & 0x0100) {
         // special commands: MUST NOT have YAAAAAAX pattern for cmd
-        if (!_check_yaaaaaa(cmd >> 1)) {
-            cmd0 = cmd;
+        if (!_check_yaaaaaa(cmd_id >> 1)) {
+            cmd0 = cmd_id;
             cmd1 = arg;
             ESP_LOGI(TAG, "Special command %d with argument %d", cmd0, cmd1);
         } else {
-            ESP_LOGE(TAG, "Special command %d with argument %d is not valid", cmd, arg);
+            ESP_LOGE(TAG, "Special command %d with argument %d is not valid", cmd_id, arg);
             return DALI_RESULT_INVALID_CMD;
         }
     } else {
         // regular commands: MUST have YAAAAAA pattern for arg
         if (_check_yaaaaaa(arg)) {
             cmd0 = arg << 1 | 1;
-            cmd1 = cmd;
+            cmd1 = cmd_id;
             ESP_LOGI(TAG, "Regular command %d with argument %d", cmd1, cmd0);
         } else {
-            ESP_LOGE(TAG, "Regular command %d with argument %d is not valid", cmd, arg);
+            ESP_LOGE(TAG, "Regular command %d with argument %d is not valid", cmd_id, arg);
             return DALI_RESULT_INVALID_CMD;
         }
     }
-    if (cmd & 0x0200) {
+    if (cmd_id & 0x0200) {
         ESP_LOGI(TAG, "REPEAT command %d with argument %d", cmd0, cmd1);
         tx_wait_rx(cmd0, cmd1);
     }
     int16_t rv = tx_wait_rx(cmd0, cmd1);
     ESP_LOGI(TAG, "Command %d with argument %d returned %d", cmd0, cmd1, rv);
     return rv;
+}
+
+/**
+ * Send an extended (device type 8) command to the bus.
+ * 
+ * @param cmd_id The command to send.
+ * @param arg The argument to send.
+ * @return The return value of the command.
+ */
+int16_t Dali::cmd8(uint16_t cmd_id, uint8_t arg)
+{
+    cmd(DALI_ENABLE_DEVICE_TYPE, DEVICE_TYPE_CCT);
+    return cmd(cmd_id, arg);
 }
 
 uint8_t Dali::set_operating_mode(uint8_t v, uint8_t adr)
@@ -578,14 +591,9 @@ uint8_t Dali::set_temperature(uint8_t addr, uint16_t temperature)
         return 2;
     }
 
-    // Enable device type 8
-    cmd(0x03C1, 8);
-    // Load temperature from DTR
-    cmd(0x00E7, addr);
-    // Enable device type 8
-    cmd(0x03C1, 8);
-    // Active temperature
-    cmd(0x00E2, 0);
+    // Load and activate new temperature.
+    cmd8(DALI_LOAD_CCT_FROM_DTR, addr);
+    cmd8(DALI_ACTIVATE_CCT, addr);
 
     return 0;
 }

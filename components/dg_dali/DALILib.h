@@ -69,7 +69,8 @@ public:
   //HIGH LEVEL PUBLIC
   void     set_level(uint8_t level, uint8_t adr=0xFF); //set arc level
   uint8_t  set_temperature(uint8_t addr, uint16_t temperature); // set color temperature
-  int16_t  cmd(uint16_t cmd, uint8_t arg); //execute DALI command, use a DALI_xxx command define as cmd argument, returns negative DALI_RESULT_xxx or reply byte
+  int16_t  cmd(uint16_t cmd_id, uint8_t arg); //execute DALI command, use a DALI_xxx command define as cmd argument, returns negative DALI_RESULT_xxx or reply byte
+  int16_t  cmd8(uint16_t cmd_id, uint8_t arg); //execute DT8 command
   uint8_t  set_operating_mode(uint8_t v, uint8_t adr=0xFF); //returns 0 on success
   uint8_t  set_max_level(uint8_t v, uint8_t adr=0xFF); //returns 0 on success
   uint8_t  set_min_level(uint8_t v, uint8_t adr=0xFF); //returns 0 on success
@@ -147,7 +148,8 @@ private:
 
 #define DALI_BAUD 1200
 
-
+#define DEVICE_TYPE_NORMAL 6
+#define DEVICE_TYPE_CCT 8
 
 //bit8=extended commands, bit9=repeat
 #define DALI_OFF 0 //0  - Turns off lighting.
@@ -377,11 +379,13 @@ private:
 #define DALI_REFERENCE_SYSTEM_POWER 224 //224 IEC62386-207 - Starts power measurement. (Command that exist only in IEC62386-207)
 #define DALI_ENABLE_CURRENT_PROTECTOR 225 //225 IEC62386-207 - Enables the current protection. (Command that exist only in IEC62386-207)
 #define DALI_DISABLE_CURRENT_PROTECTOR 226 //226 IEC62386-207 - Disables the current protection. (Command that exist only in IEC62386-207)
+#define DALI_ACTIVATE_CCT 0x00E2 // 226 - Activate CCT fade. Call after loading CCT value from DTR.
 #define DALI_SELECT_DIMMING_CURVE 227 //227 IEC62386-207 - Selects Dimming curve. (Command that exist only in IEC62386-207)
 #define DALI_STORE_DTR_AS_FAST_FADE_TIME 228 //228 IEC62386-207 - Sets the DTR of the data as Fast Fade Time.(Command that exist only in IEC62386-207)
 #define DALI_RESERVED229 229 //229  - [Reserved]
 #define DALI_RESERVED230 230 //230  - [Reserved]
 #define DALI_RESERVED231 231 //231  - [Reserved]
+#define DALI_LOAD_CCT_FROM_DTR 0x00E7 //231  - Load numeric CCT value from DTR0-1
 #define DALI_RESERVED232 232 //232  - [Reserved]
 #define DALI_RESERVED233 233 //233  - [Reserved]
 #define DALI_RESERVED234 234 //234  - [Reserved]
@@ -423,6 +427,7 @@ private:
 #define DALI_PHYSICAL_SELECTION 0x01BD //270 not DALI-2 - Sets the slave to Physical Selection Mode and excludes the slave from the Compare process. (Excluding IEC62386-102ed2.0) (Command that exist only in IEC62386-102ed1.0, -207ed1.0)
 #define DALI_RESERVED271 0x01BF //271  - [Reserved]
 #define DALI_ENABLE_DEVICE_TYPE_X 0x01C1 //272  - Adds the device XXXX (a special device).
+#define DALI_ENABLE_DEVICE_TYPE 0x03C1 //272 - Enable device type for next command (arg should be 6 or 8).
 #define DALI_DATA_TRANSFER_REGISTER1 0x01C3 //273  - Stores data XXXX into DTR1.
 #define DALI_DATA_TRANSFER_REGISTER2 0x01C5 //274  - Stores data XXXX into DTR2.
 #define DALI_WRITE_MEMORY_LOCATION 0x01C7 //275  - Write data into the specified address of the specified memory bank. (There is BW) (DTR(DTR0)：address, DTR1：memory bank number)
